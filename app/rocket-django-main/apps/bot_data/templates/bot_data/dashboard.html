@@ -1,0 +1,245 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block content %}
+<main>
+  <!-- Индикатор загрузки -->
+  <div id="loading-indicator" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p class="text-gray-600 dark:text-gray-400">Загрузка данных...</p>
+    </div>
+  </div>
+
+  <!-- Основной контент (изначально прозрачный) -->
+  <div id="dashboard-content" style="opacity: 0;">
+    <div class="px-4 pt-6">
+      <!-- KPI Cards -->
+      <div class="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3 mb-6">
+        <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex-shrink-0">
+              <span id="total-calculations" class="text-xl font-bold leading-none text-gray-900 sm:text-2xl dark:text-white">-</span>
+              <h3 class="text-base font-light text-gray-500 dark:text-gray-400">Расчётов всего</h3>
+            </div>
+            <div class="flex items-center justify-end flex-1 text-base font-medium text-blue-500 dark:text-blue-400">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex-shrink-0">
+              <span id="total-logins" class="text-xl font-bold leading-none text-gray-900 sm:text-2xl dark:text-white">-</span>
+              <h3 class="text-base font-light text-gray-500 dark:text-gray-400">Входов всего</h3>
+            </div>
+            <div class="flex items-center justify-end flex-1 text-base font-medium text-green-500 dark:text-green-400">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid gap-4 xl:grid-cols-2 mb-6">
+        <!-- Services Chart -->
+        <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Популярность услуг</h3>
+          <div class="h-64">
+            <canvas id="servicesChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Leads Chart -->
+        <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Интерес к услугам (лиды)</h3>
+          <div class="h-64">
+            <canvas id="leadsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Chart -->
+      <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Активность за 7 дней</h3>
+        <div class="h-64">
+          <canvas id="activityChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Глобальные переменные для хранения экземпляров chart
+let servicesChart = null;
+let leadsChart = null;
+let activityChart = null;
+
+async function loadBotStats() {
+  try {
+    const response = await fetch('/bot_data/stats/');
+    const data = await response.json();
+
+    // Обновляем KPI карточки
+    document.getElementById('total-calculations').textContent = data.total_calculations;
+    document.getElementById('total-logins').textContent = data.total_logins;
+
+    // Сначала показываем контент (чтобы браузер рассчитал размеры)
+    const dashboardContent = document.getElementById('dashboard-content');
+    dashboardContent.style.opacity = '1';
+
+    // Ждем следующего фрейма для гарантии расчета размеров
+    setTimeout(() => {
+      // Уничтожаем предыдущие графики если они существуют
+      if (servicesChart) servicesChart.destroy();
+      if (leadsChart) leadsChart.destroy();
+      if (activityChart) activityChart.destroy();
+
+      // Services Chart
+      const servicesCtx = document.getElementById('servicesChart').getContext('2d');
+      servicesChart = new Chart(servicesCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data.services || {}),
+          datasets: [{
+            label: 'Расчёты',
+            data: Object.values(data.services || {}),
+            backgroundColor: '#3B82F6',
+            borderColor: '#1D4ED8',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+
+      // Leads Chart
+      const leadsCtx = document.getElementById('leadsChart').getContext('2d');
+      leadsChart = new Chart(leadsCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(data.lead_services || {}),
+          datasets: [{
+            data: Object.values(data.lead_services || {}),
+            backgroundColor: [
+              '#10B981',
+              '#3B82F6',
+              '#F59E0B',
+              '#EF4444',
+              '#8B5CF6'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+
+      // Activity Chart
+      const activityCtx = document.getElementById('activityChart').getContext('2d');
+      activityChart = new Chart(activityCtx, {
+        type: 'line',
+        data: {
+          labels: (data.activity_7d || []).map(item => item.date),
+          datasets: [{
+            label: 'Расчёты',
+            data: (data.activity_7d || []).map(item => item.count),
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // Скрываем индикатор загрузки
+      document.getElementById('loading-indicator').classList.add('hidden');
+
+    }, 50); // Небольшая задержка для гарантии
+
+  } catch (error) {
+    console.error('Ошибка загрузки статистики:', error);
+
+    // В случае ошибки тоже показываем контент
+    document.getElementById('dashboard-content').style.opacity = '1';
+    document.getElementById('loading-indicator').classList.add('hidden');
+
+    // Можно добавить уведомление об ошибке
+    alert('Ошибка загрузки данных. Пожалуйста, обновите страницу.');
+  }
+}
+
+// Загружаем статистику при загрузке страницы
+document.addEventListener('DOMContentLoaded', loadBotStats);
+</script>
+
+<style>
+<!--.hidden {-->
+<!--  display: none !important;-->
+<!--}-->
+
+.fixed {
+  position: fixed;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Плавное появление контента */
+#dashboard-content {
+  transition: opacity 0.3s ease-in-out;
+}
+</style>
+{% endblock %}
