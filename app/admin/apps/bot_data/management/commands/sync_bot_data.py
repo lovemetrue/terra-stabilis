@@ -16,7 +16,7 @@ class Command(BaseCommand):
             '--db-url',
             type=str,
             help='URL подключения к PostgreSQL бота',
-            default=os.environ.get('BOT_DATABASE_URL', 'postgresql://elma365:SecretPassword@master.sale.elewise.com:5000/geobotdb')
+            default=os.environ.get('BOT_DATABASE_URL', 'postgresql://gen_user:Gcmp_2026@28bc201dfb0ca86128aa7770.twc1.net:5432/default_db?sslmode=verify-full')
         )
 
     def handle(self, *args, **options):

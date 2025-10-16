@@ -108,32 +108,29 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DB_ENGINE   = os.getenv('DB_ENGINE'   , None)
-DB_USERNAME = os.getenv('DB_USERNAME' , None)
-DB_PASS     = os.getenv('DB_PASS'     , None)
-DB_HOST     = os.getenv('DB_HOST'     , None)
-DB_PORT     = os.getenv('DB_PORT'     , None)
-DB_NAME     = os.getenv('DB_NAME'     , None)
-
-if DB_ENGINE and DB_NAME and DB_USERNAME:
-    DATABASES = { 
-      'default': {
-        'ENGINE'  : 'django.db.backends.' + DB_ENGINE, 
-        'NAME'    : DB_NAME,
-        'USER'    : DB_USERNAME,
-        'PASSWORD': DB_PASS,
-        'HOST'    : DB_HOST,
-        'PORT'    : DB_PORT,
-        }, 
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'db.sqlite3',
+# Database configuration - используем ваши данные напрямую
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'default_db',
+        'USER': 'gen_user',
+        'PASSWORD': 'Gcmp_2026',
+        'HOST': '28bc201dfb0ca86128aa7770.twc1.net',
+        'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'verify-full',
+            'sslrootcert': os.path.expanduser('~/.cloud-certs/root.crt'),
         }
     }
+}
+
+# Проверяем существование сертификата
+if not os.path.exists(DATABASES['default']['OPTIONS']['sslrootcert']):
+    print(f"Warning: SSL certificate not found at {DATABASES['default']['OPTIONS']['sslrootcert']}")
+    # Можно удалить SSL опции или изменить режим
+    # DATABASES['default']['OPTIONS']['sslmode'] = 'require'
+else:
+    print(f"SSL certificate found: {DATABASES['default']['OPTIONS']['sslrootcert']}")
 
 
 # Password validation
