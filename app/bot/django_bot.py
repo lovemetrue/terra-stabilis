@@ -9,7 +9,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
-# Теперь добавляем путь к папке rocket-django-main, чтобы Django мог найти приложения в папке apps
+# Теперь добавляем путь к папке admin, чтобы Django мог найти приложения в папке apps
 ROCKET_DJANGO_ROOT = PROJECT_ROOT / "app" / "admin"
 sys.path.append(str(ROCKET_DJANGO_ROOT))
 

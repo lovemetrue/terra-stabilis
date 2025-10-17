@@ -5,7 +5,7 @@ from django.utils import timezone
 class BotUserEvent(models.Model):
     """
     События пользователей в Telegram боте.
-    Соответствует модели UserEvent из SQLAlchemy.
+    Соответствует модели UserEvent
     """
     user_id = models.BigIntegerField(help_text="ID пользователя в Telegram")
     event_type = models.CharField(max_length=100, db_index=True, help_text="Тип события")
@@ -23,7 +23,7 @@ class BotUserEvent(models.Model):
 class BotCalculation(models.Model):
     """
     Расчеты услуг в боте.
-    Соответствует модели Calculation из SQLAlchemy.
+    Соответствует модели Calculation
     """
     user_id = models.BigIntegerField(help_text="ID пользователя в Telegram")
     service_type = models.CharField(max_length=200, help_text="Тип услуги")
@@ -43,7 +43,7 @@ class BotCalculation(models.Model):
 class BotLead(models.Model):
     """
     Лиды (потенциальные клиенты) из бота.
-    Соответствует модели Lead из SQLAlchemy.
+    Соответствует модели Lead
     """
     name = models.CharField(max_length=200, help_text="Имя клиента")
     phone = models.CharField(max_length=50, help_text="Телефон")
