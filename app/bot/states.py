@@ -1,10 +1,13 @@
 from aiogram.fsm.state import State, StatesGroup
 
 class ServiceSelection(StatesGroup):
-    """Состояния для выбора услуг"""
-    waiting_for_main_service = State()
+    """Состояния для выбора услуги"""
     waiting_for_subservice = State()
     waiting_for_final_service = State()
+
+class Calculation(StatesGroup):
+    """Состояния для расчета"""
+    showing_price = State()  # Показ цены и предложение оставить контакты
 
 class ContactCollection(StatesGroup):
     """Состояния для сбора контактов"""
@@ -13,6 +16,6 @@ class ContactCollection(StatesGroup):
     waiting_for_email = State()
     waiting_for_company = State()
 
-class Calculation(StatesGroup):
-    """Состояния для расчета"""
-    showing_price = State()
+class PhoneInput(StatesGroup):
+    """Состояния для ввода телефона"""
+    waiting_for_phone_input = State()

@@ -4,15 +4,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from asgiref.sync import sync_to_async
 
-from app.bot.keyboards.main_menu import (get_main_menu_keyboard,
-                                         get_geodata_keyboard,
-                                         get_stability_keyboard,
-                                         get_2d_keyboard,
-                                         get_3d_keyboard,
-                                         get_monitoring_keyboard,
-                                         get_contact_keyboard,
-                                         get_skip_keyboard)
-
+from app.bot.keyboards.main_menu import get_main_menu_keyboard
 from apps.bot_data.models import BotUserEvent
 
 router = Router()
@@ -45,13 +37,30 @@ async def cmd_start(message: Message, state: FSMContext):
 
 @router.message(F.text == "⬅️ Назад")
 async def back_to_main(message: Message, state: FSMContext):
-    """Возврат в главное меню"""
+    """Возврат в главное меню из подменю"""
     await state.clear()
 
     await sync_to_async(BotUserEvent.objects.create)(
         user_id=message.from_user.id,
         event_type='navigation',
         event_data={'page': 'main_menu'}
+    )
+
+    await message.answer(
+        "📋 Главное меню - выберите услугу:",
+        reply_markup=get_main_menu_keyboard()
+    )
+
+
+@router.message(F.text == "⬅️ Назад в меню")
+async def back_to_main_from_calculation(message: Message, state: FSMContext):
+    """Возврат в главное меню из расчета (когда показывается цена)"""
+    await state.clear()
+
+    await sync_to_async(BotUserEvent.objects.create)(
+        user_id=message.from_user.id,
+        event_type='navigation',
+        event_data={'page': 'main_menu', 'from': 'calculation'}
     )
 
     await message.answer(

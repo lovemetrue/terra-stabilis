@@ -239,6 +239,23 @@ async def subservice_prism(message: Message, state: FSMContext):
     await process_final_service(message, state, "prism")
 
 
+@router.message(Calculation.showing_price, F.text == "⬅️ Назад в меню")
+async def back_from_calculation(message: Message, state: FSMContext):
+    """Возврат из расчета в главное меню"""
+    await state.clear()
+
+    await sync_to_async(BotUserEvent.objects.create)(
+        user_id=message.from_user.id,
+        event_type='navigation',
+        event_data={'from': 'calculation', 'to': 'main_menu'}
+    )
+
+    await message.answer(
+        "📋 Главное меню - выберите услугу:",
+        reply_markup=get_main_menu_keyboard()
+    )
+
+
 async def process_final_service(message: Message, state: FSMContext, service_key: str):
     """Обработка конечного выбора услуги с расчетом цены"""
     price = SERVICE_PRICES.get(service_key, 0)
@@ -249,7 +266,24 @@ async def process_final_service(message: Message, state: FSMContext, service_key
 
     # Сохраняем данные о выборе
     user_data = await state.get_data()
-    await sync_to_async(BotUserEvent.objects.create)(
+
+    user_info = {
+        'username': message.from_user.username,
+        'first_name': message.from_user.first_name,
+        'last_name': message.from_user.last_name
+    }
+
+    # Создаем запись расчета и потенциального лида
+    await save_calculation(
+        user_id=message.from_user.id,
+        service_type=service_key,
+        parameters={},
+        result=f"Рассчитана стоимость услуги: {price} руб.",
+        price=price,
+        user_data=user_info
+    )
+
+    await save_user_event(
         user_id=message.from_user.id,
         event_type='final_service_select',
         event_data={
@@ -257,16 +291,8 @@ async def process_final_service(message: Message, state: FSMContext, service_key
             'sub_service': user_data.get('sub_service'),
             'final_service': service_key,
             'calculated_price': price
-        }
-    )
-
-    # Создаем запись расчета
-    await sync_to_async(BotCalculation.objects.create)(
-        user_id=message.from_user.id,
-        service_type=service_key,
-        parameters={},
-        result=f"Рассчитана стоимость услуги: {price} руб.",
-        price=price
+        },
+        **user_info
     )
 
     # Формируем текст в зависимости от услуги

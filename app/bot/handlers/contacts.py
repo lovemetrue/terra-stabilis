@@ -97,7 +97,7 @@ async def process_email(message: Message, state: FSMContext):
 
 @router.message(ContactCollection.waiting_for_company)
 async def process_company(message: Message, state: FSMContext):
-    """Обработка компании и сохранение лида"""
+    """Обработка компании и сохранение полного лида"""
     if message.text == "⬅️ Назад":
         await state.set_state(ContactCollection.waiting_for_email)
         await message.answer(
@@ -113,21 +113,38 @@ async def process_company(message: Message, state: FSMContext):
     # Получаем все данные
     user_data = await state.get_data()
 
-    # Создаем лид в базе данных
-    lead = await sync_to_async(BotLead.objects.create)(
-        name=user_data['name'],
-        phone=user_data['phone'],
-        email=user_data.get('email'),
-        company=company,
+    user_info = {
+        'username': message.from_user.username,
+        'first_name': message.from_user.first_name,
+        'last_name': message.from_user.last_name
+    }
+
+    # Сохраняем контакт и создаем полный лид
+    contact_data = {
+        'name': user_data['name'],
+        'phone': user_data['phone'],
+        'email': user_data.get('email'),
+        'company': company
+    }
+
+    lead = await save_full_lead(
+        user_id=message.from_user.id,
         service_type=user_data.get('final_service'),
         calculated_price=user_data.get('calculated_price'),
-        source="telegram"
+        contact_data=contact_data,
+        user_data=user_info
     )
 
-    await sync_to_async(BotUserEvent.objects.create)(
+    await save_user_event(
         user_id=message.from_user.id,
         event_type='lead_created',
-        event_data={'lead_id': lead.id}
+        event_data={
+            'lead_id': lead.id,
+            'contact_name': user_data['name'],
+            'phone': user_data['phone'],
+            'service_type': user_data.get('final_service')
+        },
+        **user_info
     )
 
     # Очищаем состояние
