@@ -2,10 +2,9 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
-from asgiref.sync import sync_to_async
 
 from app.bot.keyboards.main_menu import get_main_menu_keyboard
-from apps.bot_data.models import BotUserEvent
+from apps.bot_data.bot_utils import save_user_event
 
 router = Router()
 
@@ -13,10 +12,13 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     """Обработчик команды /start"""
-    await sync_to_async(BotUserEvent.objects.create)(
+    await save_user_event(
         user_id=message.from_user.id,
-        event_type='login',
-        event_data={'source': 'telegram', 'command': 'start'}
+        event_type='start',
+        event_data={'source': 'telegram', 'command': 'start'},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
     )
 
     await state.clear()
@@ -37,13 +39,16 @@ async def cmd_start(message: Message, state: FSMContext):
 
 @router.message(F.text == "⬅️ Назад")
 async def back_to_main(message: Message, state: FSMContext):
-    """Возврат в главное меню из подменю"""
+    """Возврат в главное меню"""
     await state.clear()
 
-    await sync_to_async(BotUserEvent.objects.create)(
+    await save_user_event(
         user_id=message.from_user.id,
         event_type='navigation',
-        event_data={'page': 'main_menu'}
+        event_data={'page': 'main_menu'},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
     )
 
     await message.answer(
@@ -54,13 +59,16 @@ async def back_to_main(message: Message, state: FSMContext):
 
 @router.message(F.text == "⬅️ Назад в меню")
 async def back_to_main_from_calculation(message: Message, state: FSMContext):
-    """Возврат в главное меню из расчета (когда показывается цена)"""
+    """Возврат в главное меню из расчета"""
     await state.clear()
 
-    await sync_to_async(BotUserEvent.objects.create)(
+    await save_user_event(
         user_id=message.from_user.id,
         event_type='navigation',
-        event_data={'page': 'main_menu', 'from': 'calculation'}
+        event_data={'page': 'main_menu', 'from': 'calculation'},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
     )
 
     await message.answer(
