@@ -8,9 +8,9 @@ def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
 
     buttons = [
         KeyboardButton(text="📊 Сбор исходных гео данных"),
-        KeyboardButton(text="🏗️ Расчёт устойчивости"),
-        KeyboardButton(text="👨‍💼 Геомеханик на час"),
-        KeyboardButton(text="📡 Мониторинг"),
+        KeyboardButton(text="📐 Расчеты устойчивости"),
+        KeyboardButton(text="👨‍💼 Консультации геомеханика"),
+        KeyboardButton(text="📡 Мониторинг инженерных объектов"),
         KeyboardButton(text="🏢 О компании"),
         KeyboardButton(text="ℹ️ Помощь"),
     ]
@@ -27,9 +27,9 @@ def get_geodata_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="📝 Разработка программы геотех. исследований"),
+        KeyboardButton(text="📝 Разработка программы"),
         KeyboardButton(text="🗺️ Геотехническое картирование"),
-        KeyboardButton(text="💎 Геотехническое документирование керна"),
+        KeyboardButton(text="💎 Документирование керна"),
         KeyboardButton(text="⬅️ Назад"),
     ]
 
@@ -45,8 +45,8 @@ def get_stability_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="📐 2D расчет устойчивости"),
-        KeyboardButton(text="📊 3D расчет устойчивости"),
+        KeyboardButton(text="2D расчеты"),
+        KeyboardButton(text="3D расчеты"),
         KeyboardButton(text="⬅️ Назад"),
     ]
 
@@ -62,8 +62,8 @@ def get_2d_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="2D → ОГР"),
-        KeyboardButton(text="2D → ПГР"),
+        KeyboardButton(text="2D ОГР"),
+        KeyboardButton(text="2D ПГР"),
         KeyboardButton(text="⬅️ Назад"),
     ]
 
@@ -79,8 +79,8 @@ def get_3d_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="3D → ОГР"),
-        KeyboardButton(text="3D → ПГР"),
+        KeyboardButton(text="3D ОГР"),
+        KeyboardButton(text="3D ПГР"),
         KeyboardButton(text="⬅️ Назад"),
     ]
 
@@ -90,20 +90,6 @@ def get_3d_keyboard() -> ReplyKeyboardMarkup:
     builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
 
-
-def get_back_keyboard() -> ReplyKeyboardMarkup:
-    """Клавиатура только с кнопкой Назад для обязательных полей"""
-    builder = ReplyKeyboardBuilder()
-
-    buttons = [
-        KeyboardButton(text="⬅️ Назад"),
-    ]
-
-    for button in buttons:
-        builder.add(button)
-
-    builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
 
 def get_monitoring_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для мониторинга"""
@@ -144,6 +130,53 @@ def get_skip_keyboard() -> ReplyKeyboardMarkup:
 
     buttons = [
         KeyboardButton(text="⏭️ Пропустить"),
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_back_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура только с кнопкой Назад для обязательных полей"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_phone_input_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора способа ввода телефона"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="📞 Отправить контакт", request_contact=True),
+        KeyboardButton(text="📝 Ввести номер вручную"),
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_manual_phone_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для ручного ввода телефона"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
         KeyboardButton(text="⬅️ Назад"),
     ]
 

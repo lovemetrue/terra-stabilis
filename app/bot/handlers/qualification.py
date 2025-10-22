@@ -53,25 +53,6 @@ async def service_geodata(message: Message, state: FSMContext):
     )
 
 
-# Обработчики для подуслуг сбора геоданных
-@router.message(F.text == "📝 Разработка программы")
-async def service_program_development(message: Message, state: FSMContext):
-    """Разработка программы геотехнических исследований"""
-    await process_final_service(message, state, "program_development")
-
-
-@router.message(F.text == "🗺️ Геотехническое картирование")
-async def service_mapping(message: Message, state: FSMContext):
-    """Геотехническое картирование"""
-    await process_final_service(message, state, "mapping")
-
-
-@router.message(F.text == "💎 Документирование керна")
-async def service_core_documentation(message: Message, state: FSMContext):
-    """Геотехническое документирование керна"""
-    await process_final_service(message, state, "core_documentation")
-
-
 @router.message(F.text == "📐 Расчеты устойчивости")
 async def service_stability(message: Message, state: FSMContext):
     """Услуга 2: Расчеты устойчивости"""
@@ -97,6 +78,58 @@ async def service_stability(message: Message, state: FSMContext):
         service_text,
         reply_markup=get_stability_keyboard()
     )
+
+
+@router.message(F.text == "👨‍💼 Консультации геомеханика")
+async def service_geomechanic(message: Message, state: FSMContext):
+    """Услуга 3: Консультации геомеханика"""
+    await process_final_service(message, state, "geomechanic")
+
+
+@router.message(F.text == "📡 Мониторинг инженерных объектов")
+async def service_monitoring(message: Message, state: FSMContext):
+    """Услуга 4: Мониторинг инженерных объектов"""
+    await state.set_state(ServiceSelection.waiting_for_subservice)
+    await state.update_data(main_service="monitoring")
+
+    await save_user_event(
+        user_id=message.from_user.id,
+        event_type='service_select',
+        event_data={'service': 'monitoring'},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
+    )
+
+    service_text = """
+📡 Мониторинг инженерных объектов
+
+Выберите тип мониторинга:
+    """
+
+    await message.answer(
+        service_text,
+        reply_markup=get_monitoring_keyboard()
+    )
+
+
+# Обработчики для подуслуг сбора геоданных
+@router.message(F.text == "📝 Разработка программы")
+async def service_program_development(message: Message, state: FSMContext):
+    """Разработка программы геотехнических исследований"""
+    await process_final_service(message, state, "program_development")
+
+
+@router.message(F.text == "🗺️ Геотехническое картирование")
+async def service_mapping(message: Message, state: FSMContext):
+    """Геотехническое картирование"""
+    await process_final_service(message, state, "mapping")
+
+
+@router.message(F.text == "💎 Документирование керна")
+async def service_core_documentation(message: Message, state: FSMContext):
+    """Геотехническое документирование керна"""
+    await process_final_service(message, state, "core_documentation")
 
 
 # Обработчики для подуслуг расчетов устойчивости
@@ -163,39 +196,6 @@ async def service_3d_pgr(message: Message, state: FSMContext):
     await process_final_service(message, state, "3d_pgr")
 
 
-@router.message(F.text == "👨‍💼 Консультации геомеханика")
-async def service_geomechanic(message: Message, state: FSMContext):
-    """Услуга 3: Консультации геомеханика"""
-    await process_final_service(message, state, "geomechanic")
-
-
-@router.message(F.text == "📡 Мониторинг инженерных объектов")
-async def service_monitoring(message: Message, state: FSMContext):
-    """Услуга 4: Мониторинг инженерных объектов"""
-    await state.set_state(ServiceSelection.waiting_for_subservice)
-    await state.update_data(main_service="monitoring")
-
-    await save_user_event(
-        user_id=message.from_user.id,
-        event_type='service_select',
-        event_data={'service': 'monitoring'},
-        username=message.from_user.username,
-        first_name=message.from_user.first_name,
-        last_name=message.from_user.last_name
-    )
-
-    service_text = """
-📡 Мониторинг инженерных объектов
-
-Выберите тип мониторинга:
-    """
-
-    await message.answer(
-        service_text,
-        reply_markup=get_monitoring_keyboard()
-    )
-
-
 # Обработчики для подуслуг мониторинга
 @router.message(F.text == "📡 Георадарный мониторинг")
 async def service_georadar(message: Message, state: FSMContext):
@@ -207,6 +207,27 @@ async def service_georadar(message: Message, state: FSMContext):
 async def service_prism(message: Message, state: FSMContext):
     """Призменный мониторинг"""
     await process_final_service(message, state, "prism")
+
+
+# Обработчики для кнопок Назад в услугах
+@router.message(ServiceSelection.waiting_for_subservice, F.text == "⬅️ Назад")
+async def back_from_subservice(message: Message, state: FSMContext):
+    """Возврат из подуслуг в главное меню"""
+    await state.clear()
+
+    await save_user_event(
+        user_id=message.from_user.id,
+        event_type='navigation',
+        event_data={'page': 'main_menu', 'from': 'subservice'},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
+    )
+
+    await message.answer(
+        "📋 Главное меню - выберите услугу:",
+        reply_markup=get_main_menu_keyboard()
+    )
 
 
 async def process_final_service(message: Message, state: FSMContext, service_key: str):

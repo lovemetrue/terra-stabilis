@@ -130,7 +130,7 @@ def bot_stats_api(request):
     total_calculations = BotCalculation.objects.count()
 
     # Количество входов (события типа 'login')
-    total_logins = BotUserEvent.objects.filter(event_type='login').count()
+    total_logins = BotUserEvent.objects.filter(event_type='start').count()
 
     # Популярные услуги по расчетам
     services_data = BotCalculation.objects.exclude(service_type__isnull=True) \
