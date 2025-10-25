@@ -33,24 +33,24 @@
           </div>
         </div>
 
-        <!-- Вторая карточка - занимает всё оставшееся пространство -->
-        <div class="flex-1">
-          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800 h-full">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex-shrink-0">
-                <span id="total-logins" class="text-xl font-bold leading-none text-gray-900 sm:text-2xl dark:text-white">-</span>
-                <h3 class="text-base font-light text-gray-500 dark:text-gray-400">Входов всего</h3>
-              </div>
-              <div class="flex items-center justify-end flex-1 text-base font-medium text-green-500 dark:text-green-400">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                  <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+<!--        &lt;!&ndash; Вторая карточка - занимает всё оставшееся пространство &ndash;&gt;-->
+<!--        <div class="flex-1">-->
+<!--          <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800 h-full">-->
+<!--            <div class="flex items-center justify-between mb-4">-->
+<!--              <div class="flex-shrink-0">-->
+<!--                <span id="total-logins" class="text-xl font-bold leading-none text-gray-900 sm:text-2xl dark:text-white">-</span>-->
+<!--                <h3 class="text-base font-light text-gray-500 dark:text-gray-400">Входов всего</h3>-->
+<!--              </div>-->
+<!--              <div class="flex items-center justify-end flex-1 text-base font-medium text-green-500 dark:text-green-400">-->
+<!--                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">-->
+<!--                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>-->
+<!--                  <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>-->
+<!--                </svg>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
 
       <!-- Charts Row -->
       <div class="grid gap-4 xl:grid-cols-2 mb-6">
@@ -96,7 +96,7 @@ async function loadBotStats() {
 
     // Обновляем KPI карточки
     document.getElementById('total-calculations').textContent = data.total_calculations;
-    document.getElementById('total-logins').textContent = data.total_logins;
+<!--    document.getElementById('total-logins').textContent = data.total_logins;-->
 
     // Сначала показываем контент (чтобы браузер рассчитал размеры)
     const dashboardContent = document.getElementById('dashboard-content');

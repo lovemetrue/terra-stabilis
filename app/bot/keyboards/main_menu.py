@@ -7,10 +7,11 @@ def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="📊 Сбор исходных гео данных"),
-        KeyboardButton(text="🏗️ Расчёт устойчивости"),
+        KeyboardButton(text="📊 Сбор исходных данных"),
+        KeyboardButton(text="📐 Расчёт устойчивости"),
         KeyboardButton(text="👨‍💼 Геомеханик на час"),
         KeyboardButton(text="📡 Мониторинг"),
+        KeyboardButton(text="💧 Гидрогеология"),
         KeyboardButton(text="🏢 О компании"),
         KeyboardButton(text="ℹ️ Помощь"),
     ]
@@ -23,12 +24,11 @@ def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
 
 
 def get_geodata_keyboard() -> ReplyKeyboardMarkup:
-    """Клавиатура для сбора гео данных"""
+    """Клавиатура для сбора исходных данных"""
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="📝 Разработка программы геотех. исследований"),
-        KeyboardButton(text="🗺️ Геотехническое картирование"),
+        KeyboardButton(text="📝 Разработка программы геотехнических исследований"),
         KeyboardButton(text="💎 Геотехническое документирование керна"),
         KeyboardButton(text="⬅️ Назад"),
     ]
@@ -36,7 +36,7 @@ def get_geodata_keyboard() -> ReplyKeyboardMarkup:
     for button in buttons:
         builder.add(button)
 
-    builder.adjust(1)  # 1 кнопка в строке
+    builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
 
 
@@ -45,73 +45,67 @@ def get_stability_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="📐 2D расчет устойчивости"),
-        KeyboardButton(text="📊 3D расчет устойчивости"),
+        KeyboardButton(text="2D ОГР"),
+        KeyboardButton(text="2D ПГР"),
+        KeyboardButton(text="3D ОГР"),
+        KeyboardButton(text="3D ПГР"),
         KeyboardButton(text="⬅️ Назад"),
     ]
 
     for button in buttons:
         builder.add(button)
 
-    builder.adjust(1)
+    builder.adjust(2)
     return builder.as_markup(resize_keyboard=True)
 
-
-def get_2d_keyboard() -> ReplyKeyboardMarkup:
-    """Клавиатура для 2D расчета"""
-    builder = ReplyKeyboardBuilder()
-
-    buttons = [
-        KeyboardButton(text="2D → ОГР"),
-        KeyboardButton(text="2D → ПГР"),
-        KeyboardButton(text="⬅️ Назад"),
-    ]
-
-    for button in buttons:
-        builder.add(button)
-
-    builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
-
-
-def get_3d_keyboard() -> ReplyKeyboardMarkup:
-    """Клавиатура для 3D расчета"""
-    builder = ReplyKeyboardBuilder()
-
-    buttons = [
-        KeyboardButton(text="3D → ОГР"),
-        KeyboardButton(text="3D → ПГР"),
-        KeyboardButton(text="⬅️ Назад"),
-    ]
-
-    for button in buttons:
-        builder.add(button)
-
-    builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
-
-
-def get_back_keyboard() -> ReplyKeyboardMarkup:
-    """Клавиатура только с кнопкой Назад для обязательных полей"""
-    builder = ReplyKeyboardBuilder()
-
-    buttons = [
-        KeyboardButton(text="⬅️ Назад"),
-    ]
-
-    for button in buttons:
-        builder.add(button)
-
-    builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
 
 def get_monitoring_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для мониторинга"""
     builder = ReplyKeyboardBuilder()
 
     buttons = [
-        KeyboardButton(text="📡 Георадарный мониторинг"),
         KeyboardButton(text="🔺 Призменный мониторинг"),
+        KeyboardButton(text="📡 Интерпретация данных георадарного мониторинга"),
+        KeyboardButton(text="⚙️ Настройка пороговых значений по TARP"),
+        KeyboardButton(text="📋 Разработка документа TARP"),
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_hydrogeology_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для гидрогеологии"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="🌊 Гидрогеологическое обследование участка"),
+        KeyboardButton(text="📊 Интерпретация данных наблюдательных скважин"),
+        KeyboardButton(text="💻 Моделирование фильтрационного потока"),
+        KeyboardButton(text="🔧 Расчет депрессии и проект дренажной системы"),
+        KeyboardButton(text="📈 Гидрогеологический мониторинг"),
+        KeyboardButton(text="⚖️ Оценка влияния подземных вод на устойчивость"),
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_geomechanic_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для геомеханика на час"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="👨‍💼 Ведущий геомеханик"),
+        KeyboardButton(text="👨‍🔬 Главный геомеханик"),
         KeyboardButton(text="⬅️ Назад"),
     ]
 
@@ -151,4 +145,68 @@ def get_skip_keyboard() -> ReplyKeyboardMarkup:
         builder.add(button)
 
     builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_back_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура только с кнопкой Назад"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_phone_input_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора способа ввода телефона"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="📞 Отправить контакт", request_contact=True),
+        KeyboardButton(text="📝 Ввести номер вручную"),
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_manual_phone_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для ручного ввода телефона"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_yes_no_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура Да/Нет"""
+    builder = ReplyKeyboardBuilder()
+
+    buttons = [
+        KeyboardButton(text="✅ Да"),
+        KeyboardButton(text="❌ Нет"),
+        KeyboardButton(text="⬅️ Назад"),
+    ]
+
+    for button in buttons:
+        builder.add(button)
+
+    builder.adjust(2)
     return builder.as_markup(resize_keyboard=True)

@@ -242,6 +242,9 @@ MESSAGE_TAGS = {
 DYNAMIC_DATATB = {
     # SLUG -> Import_PATH 
     'bot_leads' : "apps.bot_data.models.BotLead",
+    # 'bot_user_events' : "apps.bot_data.models.BotUserEvents",
+    #'bot_potential_leads': "apps.bot_data.models.BotPotentialLead",
+    'bot_users': "apps.bot_data.models.BotUser",
 }
 ########################################
 
