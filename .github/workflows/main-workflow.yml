@@ -24,22 +24,22 @@ jobs:
 
       - name: Install dependencies for bot
         run: |
-          cd apps/bot
+          cd app/bot
           pip install .[dev]
 
       - name: Install dependencies for admin
         run: |
-          cd apps/admin
+          cd app/admin
           pip install .[dev]
 
       - name: Run Django tests
         run: |
-          cd apps/admin
+          cd app/admin
           python manage.py test
 
       - name: Run bot tests
         run: |
-          cd apps/bot
+          cd app/bot
           pytest
 
   build-and-push:
@@ -78,11 +78,26 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Docker image
+      - name: Build and push Bot image
+        if: matrix.component == 'bot'
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/${{ matrix.component }}
-          file: ./apps/${{ matrix.component }}/Dockerfile
+          context: ./app/bot
+          file: ./app/bot/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Build and push Admin image
+        if: matrix.component == 'admin'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/admin
+          file: ./app/admin/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
