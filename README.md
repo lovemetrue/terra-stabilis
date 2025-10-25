@@ -48,7 +48,7 @@ A sophisticated Telegram bot for Terra Stabilis - center of competence in geomec
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.12+
 - PostgreSQL 13+
 - Redis 6+
 - Telegram Bot Token
