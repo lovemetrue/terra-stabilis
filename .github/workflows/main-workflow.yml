@@ -22,15 +22,15 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies for bot
+      - name: Install bot dependencies from requirements
         run: |
           cd app/bot
-          pip install .[dev]
+          pip install -r requirements.txt
 
-      - name: Install dependencies for admin
+      - name: Install admin dependencies from requirements
         run: |
           cd app/admin
-          pip install .[dev]
+          pip install -r requirements.txt
 
       - name: Run Django tests
         run: |
@@ -40,7 +40,7 @@ jobs:
       - name: Run bot tests
         run: |
           cd app/bot
-          pytest
+          python -m pytest
 
   build-and-push:
     needs: test
@@ -82,7 +82,7 @@ jobs:
         if: matrix.component == 'bot'
         uses: docker/build-push-action@v5
         with:
-          context: ./app/bot
+          context: .
           file: ./app/bot/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -96,7 +96,7 @@ jobs:
         if: matrix.component == 'admin'
         uses: docker/build-push-action@v5
         with:
-          context: ./app/admin
+          context: .
           file: ./app/admin/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
