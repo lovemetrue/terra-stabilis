@@ -5,9 +5,11 @@ WORKDIR /app
 # Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     curl \
+    gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Создание директории для SSL сертификатов
+# Создание директории для SSL сертификатов PostgreSQL
 RUN mkdir -p /root/.cloud-certs && \
     curl -o /root/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
     chmod 0600 /root/.cloud-certs/root.crt
@@ -18,7 +20,7 @@ ENV PGSSLROOTCERT=/root/.cloud-certs/root.crt
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копирование кода приложения
+# Копирование исходного кода бота
 COPY . .
 
 # Создание пользователя для безопасности

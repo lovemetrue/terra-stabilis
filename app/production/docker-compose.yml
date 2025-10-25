@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  bot:
+    image: ghcr.io/lovemetrue/terra-stabilis:latest
+    container_name: terrastabilis-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - terrastabilis-network
+    volumes:
+      - bot_logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/root/.cloud-certs/root.crt
+    depends_on:
+      - redis
+
+  admin:
+    image: ghcr.io/lovemetrue/terra-stabilis:latest
+    container_name: terrastabilis-admin
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    networks:
+      - terrastabilis-network
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/root/.cloud-certs/root.crt
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: terrastabilis-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - terrastabilis-network
+
+volumes:
+  redis_data:
+  bot_logs:
+  static_volume:
+  media_volume:
+
+networks:
+  terrastabilis-network:
+    driver: bridge

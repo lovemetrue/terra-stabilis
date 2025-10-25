@@ -10,6 +10,6 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "admin123"
     
     class Config:
-        env_file = ".env"
+        env_file = "production/.env"
 
 settings = Settings()

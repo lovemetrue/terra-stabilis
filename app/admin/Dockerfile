@@ -1,36 +1,46 @@
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+WORKDIR /app
+
+# Установка системных зависимостей для админки
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    python3-dev \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка Node.js 18
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && apt-get install -y nodejs
+
+# Создание директории для SSL сертификатов PostgreSQL
+RUN mkdir -p /root/.cloud-certs && \
+    curl -o /root/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
+    chmod 0600 /root/.cloud-certs/root.crt
+
+ENV PGSSLROOTCERT=/root/.cloud-certs/root.crt
+
+# Копирование requirements и установка зависимостей
 COPY requirements.txt .
-# install python dependencies
-RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Копирование исходного кода админки
 COPY . .
 
-# Install node 18 and npm
-RUN set -uex; \
-    apt-get update; \
-    apt-get install -y ca-certificates curl gnupg; \
-    mkdir -p /etc/apt/keyrings; \
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-    | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg; \
-    NODE_MAJOR=18; \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
-    > /etc/apt/sources.list.d/nodesource.list; \
-    apt-get update; \
-    apt-get install nodejs -y;
-
-# Install Modules, Webpack and Tailwind set up
-RUN npm i
+# Install Node.js modules, Webpack and Tailwind set up
+RUN npm ci
 RUN npm run build
 RUN npx tailwindcss -i ./static/assets/style.css -o ./static/dist/css/output.css
 
-# Manage Assets & DB 
-RUN python manage.py collectstatic --no-input 
+# Manage Assets & DB
+RUN python manage.py collectstatic --no-input
 RUN python manage.py makemigrations
 RUN python manage.py migrate
 
