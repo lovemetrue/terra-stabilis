@@ -18,7 +18,7 @@ RUN useradd -m -u 1000 botuser && \
 COPY app ./app
 
 # Переходим в директорию бота
-WORKDIR /app/app/bot
+WORKDIR /app/bot
 
 # ✅ Устанавливаем пакет в режиме разработки (здесь уже точно есть pyproject.toml)
 RUN pip install --no-cache-dir -e .
