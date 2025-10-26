@@ -114,15 +114,15 @@ jobs:
       - name: Show production files (debug)
         run: |
           echo "Listing production files in app/production:"
-          ls -la app/production/ || echo "app/production/ not found"
+          ls -la app/ || echo "app/ not found"
           echo "Checking for required files:"
-          if [ -f app/production/docker-compose.yml ]; then
+          if [ -f app/docker-compose.yml ]; then
             echo "✓ docker-compose.yml found"
           else
             echo "✗ docker-compose.yml missing"
             exit 1
           fi
-          if [ -f app/production/.env.example ]; then
+          if [ -f app/.env.example ]; then
             echo "✓ .env.example found"
           else
             echo "✗ .env.example missing"
@@ -135,7 +135,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "app/production/docker-compose.yml,app/production/.env.example"
+          source: "app/docker-compose.yml,app/.env.example"
           target: "/opt/terrastabilis/"
           overwrite: true
 
