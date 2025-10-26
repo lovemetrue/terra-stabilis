@@ -109,6 +109,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 # Database configuration - используем ваши данные напрямую
+# Универсальный путь к SSL сертификату
+SSL_CERT_PATH = os.getenv('PGSSLROOTCERT', '/app/.cloud-certs/root.crt')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -119,7 +122,7 @@ DATABASES = {
         'PORT': '5432',
         'OPTIONS': {
             'sslmode': 'verify-full',
-            'sslrootcert': os.path.expanduser('~/.cloud-certs/root.crt'),
+            'sslrootcert': SSL_CERT_PATH,  # Явный путь
         }
     }
 }
