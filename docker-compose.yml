@@ -6,7 +6,7 @@ services:
     container_name: terrastabilis-bot
     restart: unless-stopped
     env_file:
-      - .env.example
+      - .env
     networks:
       - terrastabilis-network
     volumes:
@@ -14,7 +14,11 @@ services:
       - ~/.cloud-certs:/root/.cloud-certs:ro
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/root/.cloud-certs/root.crt
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}&sslrootcert=${PGSSLROOTCERT}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - redis
 
@@ -23,7 +27,7 @@ services:
     container_name: terrastabilis-admin
     restart: unless-stopped
     env_file:
-      - .env.example
+      - .env
     ports:
       - "8000:8000"
     networks:
@@ -34,7 +38,10 @@ services:
       - ~/.cloud-certs:/root/.cloud-certs:ro
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/root/.cloud-certs/root.crt
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}&sslrootcert=${PGSSLROOTCERT}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - redis
 
