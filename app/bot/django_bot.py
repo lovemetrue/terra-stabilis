@@ -5,6 +5,20 @@ import asyncio
 import logging
 from pathlib import Path
 
+# Проверка SSL сертификата перед настройкой Django
+SSL_CERT_PATH = os.getenv('PGSSLROOTCERT', '/app/.cloud-certs/root.crt')
+print(f"🔍 Checking SSL certificate at: {SSL_CERT_PATH}")
+
+if not Path(SSL_CERT_PATH).exists():
+    print(f"❌ SSL certificate not found at: {SSL_CERT_PATH}")
+    print("Available files in /app:")
+    for item in Path('/app').rglob('*'):
+        if item.is_file():
+            print(f"  - {item}")
+    sys.exit(1)
+else:
+    print(f"✅ SSL certificate found: {SSL_CERT_PATH}")
+
 # Добавляем корневую директорию проекта в Python path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(PROJECT_ROOT))
