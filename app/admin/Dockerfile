@@ -1,12 +1,11 @@
 FROM python:3.12-slim
 
-# set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-# Установка системных зависимостей для админки
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     curl \
     gcc \
@@ -20,27 +19,27 @@ RUN mkdir -p /etc/apt/keyrings && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && apt-get install -y nodejs npm
 
-# Создание директории для SSL сертификатов PostgreSQL
+# SSL сертификаты PostgreSQL
 RUN mkdir -p /root/.cloud-certs && \
     curl -o /root/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
     chmod 0600 /root/.cloud-certs/root.crt
 
 ENV PGSSLROOTCERT=/root/.cloud-certs/root.crt
 
-# Копирование pyproject.toml и установка пакета в режиме разработки
-COPY app/admin/pyproject.toml .
+# Копируем только админку
 COPY app/admin/ .
+
+# Устанавливаем зависимости
 RUN pip install --no-cache-dir -e .
 
-# Install Node.js modules, Webpack and Tailwind set up
+# Node.js зависимости и сборка
 RUN npm ci
 RUN npm run build
 RUN npx tailwindcss -i ./static/assets/style.css -o ./static/dist/css/output.css
 
-# Manage Assets & DB
+# Миграции и статика
 RUN python manage.py collectstatic --no-input
 RUN python manage.py makemigrations
 RUN python manage.py migrate
 
-# gunicorn
 CMD ["gunicorn", "--config", "gunicorn-cfg.py", "config.wsgi"]
