@@ -82,7 +82,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "app/prod/docker-compose.yml,app/prod/.env.example"
+          source: "app/docker-compose.yml,app/.env.example"
           target: "/opt/terrastabilis/"
           overwrite: true
 
@@ -105,13 +105,13 @@ jobs:
             echo "=== Checking files in /opt/terrastabilis ==="
             ls -la
 
-            # Если файлы в app/, перемещаем их в prod
+            # Если файлы в app/, перемещаем их в корень
             if [ -f app/docker-compose.yml ]; then
-              echo "📁 Files found in app/, moving to prod..."
-              mv app/docker-compose.yml app/prod/docker-compose.yml
-              mv app/.env.example app/prod/.env.example
+              echo "📁 Files found in app/, moving to root..."
+              mv app/docker-compose.yml ./
+              mv app/.env.example ./
               rm -rf app/
-              echo "✅ Files moved to prod directory"
+              echo "✅ Files moved to root directory"
             fi
 
             # Проверяем наличие файлов после перемещения
