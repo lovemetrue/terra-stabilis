@@ -38,8 +38,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = {find = {where = ["."]}}
-include-package-data = true
+packages = { find = { where = ["app"] } }
 
 [build-system]
 requires = ["setuptools", "wheel"]

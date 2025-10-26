@@ -8,7 +8,7 @@ from app.bot.keyboards.main_menu import (
     get_contact_keyboard, get_yes_no_keyboard, get_back_keyboard
 )
 from app.bot.states import ServiceSelection, Calculation
-from apps.bot_data.bot_utils import save_user_event, save_calculation, save_lead
+from app.admin.apps.bot_data.bot_utils import save_user_event, save_calculation, save_lead
 
 router = Router()
 
