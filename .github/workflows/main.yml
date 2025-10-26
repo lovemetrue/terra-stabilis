@@ -100,7 +100,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "app/docker-compose.yml,app/.env.example"
+          source: "app/"
           target: "/opt/terrastabilis/"
           overwrite: true
 
