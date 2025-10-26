@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Создание пользователя для безопасности
-RUN useradd -m -u 1000 botuser && mkdir -p /home/botuser/.cloud-certs && chown -R botuser:botuser /app/home/botuser
+RUN useradd -m -u 1000 botuser && mkdir -p /home/botuser/.cloud-certs && chown -R botuser:botuser /app /home/botuser
 
 # Копирование requirements и установка зависимостей
 COPY app/bot/requirements.txt .

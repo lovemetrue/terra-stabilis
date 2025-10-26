@@ -1,5 +1,4 @@
 name: Build and Deploy Terra Stabilis
-
 on:
   push:
     branches: [ main ]
