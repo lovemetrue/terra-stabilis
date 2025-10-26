@@ -3,9 +3,9 @@ from aiogram.types import Message, Contact
 from aiogram.fsm.context import FSMContext
 import re
 
-from app.bot.states import ContactCollection, PhoneInput
+from app.bot.states import ContactCollection, PhoneInput, EmailInput, OrganizationInput
 from app.bot.keyboards.main_menu import *
-from apps.bot_data.bot_utils import save_user_event, save_contact
+from apps.bot_data.bot_utils import save_user_event, save_contact, validate_email, format_user_data_for_confirmation
 
 router = Router()
 
@@ -125,46 +125,16 @@ async def process_contact(message: Message, state: FSMContext):
     # Форматируем номер
     formatted_phone = format_phone_number(phone_number)
 
-    # Получаем данные из состояния
-    user_data = await state.get_data()
-    name = user_data.get('name')
+    # Обновляем данные в состоянии
+    await state.update_data(phone=formatted_phone)
 
-    # Сохраняем контакт
-    await save_contact(
-        user_id=message.from_user.id,
-        phone=formatted_phone,
-        name=name,
-        username=message.from_user.username,
-        first_name=message.from_user.first_name,
-        last_name=message.from_user.last_name
-    )
-
-    await save_user_event(
-        user_id=message.from_user.id,
-        event_type='contact_shared',
-        event_data={'phone': formatted_phone, 'source': 'contact'},
-        username=message.from_user.username,
-        first_name=message.from_user.first_name,
-        last_name=message.from_user.last_name
-    )
-
-    # Очищаем состояние
-    await state.clear()
-
-    success_text = f"""
-✅ Спасибо, {name}!
-
-Ваш контакт успешно сохранён. 
-Наш специалист свяжется с вами в ближайшее время.
-
-Если у вас есть срочные вопросы, звоните: +7 (XXX) XXX-XX-XX
-
-Хотите рассчитать еще одну услугу?
-    """
+    # Переходим к запросу email
+    await state.set_state(ContactCollection.waiting_for_email)
 
     await message.answer(
-        success_text,
-        reply_markup=get_main_menu_keyboard()
+        "📧 Хотели бы вы указать ваш email?\n\n"
+        "Это поможет нам отправлять вам подробные расчеты и документацию.",
+        reply_markup=get_skip_keyboard()
     )
 
 
@@ -197,24 +167,118 @@ async def process_manual_phone(message: Message, state: FSMContext):
     # Форматируем номер
     formatted_phone = format_phone_number(phone_number)
 
-    # Получаем данные из состояния
-    user_data = await state.get_data()
-    name = user_data.get('name')
+    # Обновляем данные в состоянии
+    await state.update_data(phone=formatted_phone)
 
-    # Сохраняем контакт
-    await save_contact(
-        user_id=message.from_user.id,
-        phone=formatted_phone,
-        name=name,
-        username=message.from_user.username,
-        first_name=message.from_user.first_name,
-        last_name=message.from_user.last_name
+    # Переходим к запросу email
+    await state.set_state(ContactCollection.waiting_for_email)
+
+    await message.answer(
+        "📧 Хотели бы вы указать ваш email?\n\n"
+        "Это поможет нам отправлять вам подробные расчеты и документацию.",
+        reply_markup=get_skip_keyboard()
     )
 
-    await save_user_event(
+
+@router.message(ContactCollection.waiting_for_email, F.text)
+async def process_email_choice(message: Message, state: FSMContext):
+    """Обработка выбора относительно email"""
+    if message.text == "⏭️ Пропустить":
+        # Пропускаем email, переходим к организации
+        await state.set_state(ContactCollection.waiting_for_organization)
+        await message.answer(
+            "🏢 Хотели бы вы указать вашу организацию?\n\n"
+            "Эта информация поможет нам лучше понять ваши потребности.",
+            reply_markup=get_skip_keyboard()
+        )
+        return
+
+    elif message.text == "⬅️ Назад":
+        # Возвращаемся к выбору способа ввода телефона
+        await state.set_state(ContactCollection.waiting_for_phone)
+        await message.answer(
+            "Выберите способ ввода телефона:",
+            reply_markup=get_phone_input_keyboard()
+        )
+        return
+
+    else:
+        # Пользователь ввел email
+        email = message.text.strip()
+
+        if validate_email(email):
+            await state.update_data(email=email)
+            await state.set_state(ContactCollection.waiting_for_organization)
+
+            await message.answer(
+                "🏢 Хотели бы вы указать вашу организацию?\n\n"
+                "Эта информация поможет нам лучше понять ваши потребности.",
+                reply_markup=get_skip_keyboard()
+            )
+        else:
+            await message.answer(
+                "❌ Неверный формат email.\n\n"
+                "Пожалуйста, введите корректный email адрес:\n"
+                "Пример: example@company.com",
+                reply_markup=get_skip_keyboard()
+            )
+
+
+@router.message(ContactCollection.waiting_for_organization, F.text)
+async def process_organization_choice(message: Message, state: FSMContext):
+    """Обработка выбора относительно организации"""
+    if message.text == "⏭️ Пропустить":
+        # Пропускаем организацию, переходим к подтверждению
+        await show_confirmation(message, state)
+        return
+
+    elif message.text == "⬅️ Назад":
+        # Возвращаемся к email
+        await state.set_state(ContactCollection.waiting_for_email)
+        await message.answer(
+            "📧 Хотели бы вы указать ваш email?",
+            reply_markup=get_skip_keyboard()
+        )
+        return
+
+    else:
+        # Пользователь ввел название организации
+        organization = message.text.strip()
+        await state.update_data(organization=organization)
+        await show_confirmation(message, state)
+
+
+async def show_confirmation(message: Message, state: FSMContext):
+    """Показать подтверждение данных"""
+    user_data = await state.get_data()
+
+    confirmation_text = f"""
+✅ Проверьте ваши данные:
+
+{format_user_data_for_confirmation(user_data)}
+
+Всё верно?
+    """
+
+    await state.set_state(ContactCollection.confirmation)
+    await message.answer(
+        confirmation_text,
+        reply_markup=get_confirmation_keyboard()
+    )
+
+
+@router.message(ContactCollection.confirmation, F.text == "✅ Всё верно")
+async def process_confirmation(message: Message, state: FSMContext):
+    """Обработка подтверждения данных"""
+    user_data = await state.get_data()
+
+    # Сохраняем все данные
+    await save_contact(
         user_id=message.from_user.id,
-        event_type='contact_phone_provided',
-        event_data={'phone': formatted_phone, 'source': 'manual'},
+        phone=user_data.get('phone'),
+        name=user_data.get('name'),
+        email=user_data.get('email'),
+        organization=user_data.get('organization'),
         username=message.from_user.username,
         first_name=message.from_user.first_name,
         last_name=message.from_user.last_name
@@ -223,13 +287,13 @@ async def process_manual_phone(message: Message, state: FSMContext):
     # Очищаем состояние
     await state.clear()
 
+    # Формируем сообщение о успешном сохранении
+    name = user_data.get('name', '')
     success_text = f"""
 ✅ Спасибо, {name}!
 
-Ваш контакт успешно сохранён. 
+Ваши контактные данные успешно сохранены. 
 Наш специалист свяжется с вами в ближайшее время.
-
-Если у вас есть срочные вопросы, звоните: +7 (XXX) XXX-XX-XX
 
 Хотите рассчитать еще одну услугу?
     """
@@ -237,4 +301,15 @@ async def process_manual_phone(message: Message, state: FSMContext):
     await message.answer(
         success_text,
         reply_markup=get_main_menu_keyboard()
+    )
+
+
+@router.message(ContactCollection.confirmation, F.text == "✏️ Исправить")
+async def process_correction(message: Message, state: FSMContext):
+    """Обработка запроса на исправление данных"""
+    await state.set_state(ContactCollection.waiting_for_name)
+
+    await message.answer(
+        "Давайте исправим данные. Введите ваше имя:",
+        reply_markup=get_back_keyboard()
     )

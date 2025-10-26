@@ -12,7 +12,6 @@ def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
         KeyboardButton(text="👨‍💼 Геомеханик на час"),
         KeyboardButton(text="📡 Мониторинг"),
         KeyboardButton(text="💧 Гидрогеология"),
-        KeyboardButton(text="🏢 О компании"),
         KeyboardButton(text="ℹ️ Помощь"),
     ]
 
@@ -167,16 +166,11 @@ def get_phone_input_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора способа ввода телефона"""
     builder = ReplyKeyboardBuilder()
 
-    buttons = [
-        KeyboardButton(text="📞 Отправить контакт", request_contact=True),
-        KeyboardButton(text="📝 Ввести номер вручную"),
-        KeyboardButton(text="⬅️ Назад"),
-    ]
+    builder.add(KeyboardButton(text="🚀 Рассчитать стоимость"))
+    builder.add(KeyboardButton(text="📞 Оставить контакты"))
+    builder.add(KeyboardButton(text="ℹ️ О компании"))
 
-    for button in buttons:
-        builder.add(button)
-
-    builder.adjust(1)
+    builder.adjust(2, 1)
     return builder.as_markup(resize_keyboard=True)
 
 
@@ -208,5 +202,19 @@ def get_yes_no_keyboard() -> ReplyKeyboardMarkup:
     for button in buttons:
         builder.add(button)
 
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True)
+
+
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+
+
+def get_confirmation_keyboard():
+    """Клавиатура для подтверждения данных"""
+    builder = ReplyKeyboardBuilder()
+
+    builder.add(KeyboardButton(text="✅ Всё верно"))
+    builder.add(KeyboardButton(text="✏️ Исправить"))
     builder.adjust(2)
     return builder.as_markup(resize_keyboard=True)
