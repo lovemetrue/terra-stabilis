@@ -14,14 +14,16 @@ RUN useradd -m -u 1000 botuser && \
     mkdir -p /home/botuser/.cloud-certs && \
     chown -R botuser:botuser /app /home/botuser
 
-# ✅ Копируем всю структуру проекта
-COPY app ./app
+# Копируем всю структуру проекта
+COPY . .
 
-# Переходим в директорию бота
-WORKDIR /app/bot
-
-# ✅ Устанавливаем пакет в режиме разработки (здесь уже точно есть pyproject.toml)
+# Переходим в директорию бота и устанавливаем пакет
+WORKDIR /app/app/bot
 RUN pip install --no-cache-dir -e .
+
+# Возвращаемся в корень и устанавливаем PYTHONPATH
+WORKDIR /app
+ENV PYTHONPATH=/app
 
 USER botuser
 
