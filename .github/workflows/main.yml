@@ -113,7 +113,7 @@ jobs:
 
       - name: Show production files (debug)
         run: |
-          echo "Listing production files in app/production:"
+          echo "Listing production files in app/:"
           ls -la app/ || echo "app/ not found"
           echo "Checking for required files:"
           if [ -f app/docker-compose.yml ]; then
