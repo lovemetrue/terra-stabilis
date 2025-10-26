@@ -37,8 +37,9 @@ dependencies = [
     "whitenoise==6.5.0"
 ]
 
+
 [tool.setuptools]
-packages = {find = {where = [".", ".."]}}
+packages = {find = {where = ["."]}}
 include-package-data = true
 
 [build-system]
