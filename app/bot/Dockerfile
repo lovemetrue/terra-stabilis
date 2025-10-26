@@ -10,9 +10,18 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Создание пользователя для безопасности
-RUN useradd -m -u 1000 botuser && \
-    mkdir -p /home/botuser/.cloud-certs && \
-    chown -R botuser:botuser /app /home/botuser
+RUN useradd -m -u 1000 botuser
+
+# SSL сертификаты для root и botuser
+RUN mkdir -p /root/.cloud-certs && \
+    curl -o /root/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
+    chmod 0600 /root/.cloud-certs/root.crt
+
+# Создаем директорию для botuser и копируем сертификат
+RUN mkdir -p /home/botuser/.cloud-certs && \
+    cp /root/.cloud-certs/root.crt /home/botuser/.cloud-certs/root.crt && \
+    chown -R botuser:botuser /home/botuser/.cloud-certs && \
+    chmod 0600 /home/botuser/.cloud-certs/root.crt
 
 # Копируем всю структуру проекта
 COPY . .
@@ -27,6 +36,8 @@ ENV PYTHONPATH=/app
 
 USER botuser
 
+# Устанавливаем переменную окружения для SSL сертификата
+ENV PGSSLROOTCERT=/home/botuser/.cloud-certs/root.crt
+
 # Запуск бота
-#CMD ["python", "-c", "from app.bot.django_bot import main; main()"]
 CMD ["python", "-c", "import asyncio; from app.bot.django_bot import main; asyncio.run(main())"]
