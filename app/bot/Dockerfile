@@ -2,6 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+ENV SERVICE_TYPE=bot
+ENV PGSSLROOTCERT=/app/.cloud-certs/root.crt
+
 # Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     curl \
@@ -12,16 +15,10 @@ RUN apt-get update && apt-get install -y \
 # Создание пользователя для безопасности
 RUN useradd -m -u 1000 botuser
 
-# SSL сертификаты для root и botuser
-RUN mkdir -p /root/.cloud-certs && \
-    curl -o /root/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
-    chmod 0600 /root/.cloud-certs/root.crt
-
-# Создаем директорию для botuser и копируем сертификат
-RUN mkdir -p /home/botuser/.cloud-certs && \
-    cp /root/.cloud-certs/root.crt /home/botuser/.cloud-certs/root.crt && \
-    chown -R botuser:botuser /home/botuser/.cloud-certs && \
-    chmod 0600 /home/botuser/.cloud-certs/root.crt
+# SSL сертификаты в единую директорию
+RUN mkdir -p /app/.cloud-certs && \
+    curl -o /app/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
+    chmod 0644 /app/.cloud-certs/root.crt
 
 # Копируем всю структуру проекта
 COPY . .
@@ -34,10 +31,10 @@ RUN pip install --no-cache-dir -e .
 WORKDIR /app
 ENV PYTHONPATH=/app
 
-USER botuser
+# Даем права botuser на доступ к сертификату
+RUN chown -R botuser:botuser /app/.cloud-certs
 
-# Устанавливаем переменную окружения для SSL сертификата
-ENV PGSSLROOTCERT=/home/botuser/.cloud-certs/root.crt
+USER botuser
 
 # Запуск бота
 CMD ["python", "-c", "import asyncio; from app.bot.django_bot import main; asyncio.run(main())"]

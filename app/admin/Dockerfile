@@ -2,6 +2,8 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV SERVICE_TYPE=admin
+ENV PGSSLROOTCERT=/app/.cloud-certs/root.crt
 
 WORKDIR /app
 
@@ -19,12 +21,10 @@ RUN mkdir -p /etc/apt/keyrings && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && apt-get install -y nodejs npm
 
-# SSL сертификаты PostgreSQL
-RUN mkdir -p /root/.cloud-certs && \
-    curl -o /root/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
-    chmod 0600 /root/.cloud-certs/root.crt
-
-ENV PGSSLROOTCERT=/root/.cloud-certs/root.crt
+# SSL сертификаты в единую директорию
+RUN mkdir -p /app/.cloud-certs && \
+    curl -o /app/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
+    chmod 0644 /app/.cloud-certs/root.crt
 
 # Копируем только админку
 COPY app/admin/ .
