@@ -94,14 +94,14 @@ jobs:
             exit 1
           fi
 
-      - name: Copy production files to server
+      - name: Copy production files to server (to user's home — not /opt)
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "app/docker-compose.yml,app/.env.example"
-          target: "/opt/terrastabilis/"
+          source: "app/"
+          target: "~/terrastabilis/"
           overwrite: true
 
       - name: Deploy and health check
@@ -236,3 +236,4 @@ jobs:
             echo "   - Admin panel: http://localhost:8000"
             echo "   - Bot: running in background"
             echo "   - Redis: running on port 6379"
+            
