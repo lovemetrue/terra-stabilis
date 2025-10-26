@@ -1,28 +1,42 @@
+# Python, macOS, packaging
 *.pyc
 *.DS_Store
 *.egg*
+
+# Build / dist
 /dist/
-/.idea
-/docs/_build/
-/node_modules/
 build/
-env
+
+# IDEs
+/.idea
+
+# Sphinx
+/docs/_build/
+
+# Node
+/node_modules/
+# keep lockfiles committed for deterministic builds:
+# do NOT ignore package-lock.json or npm-shrinkwrap.json
+yarn.lock
+
+# Virtual envs
+/env/
 env_linux
 
+# Django / app config
 #src
 #*.sqlite*
 
 #.env
-node_modules
-yarn.lock
-package-lock.json
 
 tasks_logs/
-#media/
 
+# app-specific code you don't want tracked
 apps/common/management
 apps/helpers
 
+# Media: if you want to ignore the whole folder but keep specific files:
+# (only uncomment /media/ if you really want to ignore the whole directory)
 #/media/
 !/media/mapper.json
 !/media/Sales.csv
