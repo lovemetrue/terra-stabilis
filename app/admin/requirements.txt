@@ -26,3 +26,4 @@ django-jazzmin==3.0.1
 django-api-generator==1.0.18
 django-debug-toolbar==4.2.0
 pillow==11.1.0
+gunicorn==21.2.0
