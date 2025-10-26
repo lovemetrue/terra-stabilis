@@ -1,14 +1,15 @@
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
+import re
 
 from app.bot.keyboards.main_menu import (
     get_main_menu_keyboard, get_geodata_keyboard, get_stability_keyboard,
     get_monitoring_keyboard, get_hydrogeology_keyboard, get_geomechanic_keyboard,
     get_contact_keyboard, get_yes_no_keyboard, get_back_keyboard
 )
-from app.bot.states import ServiceSelection, Calculation
-from app.admin.apps.bot_data.bot_utils import save_user_event, save_calculation, save_lead
+from app.bot.states import ContactCollection, ServiceSelection, Calculation
+from apps.bot_data.bot_utils import save_user_event, save_calculation, save_lead
 
 router = Router()
 
@@ -42,6 +43,24 @@ SERVICE_BASE_PRICES = {
     "hydro_monitoring": 150000,
     "water_impact_assessment": 180000,
 }
+
+
+@router.message(F.text == "🚀 Рассчитать стоимость")
+async def start_calculation(message: Message, state: FSMContext):
+    """Начало расчета стоимости - показ главного меню услуг"""
+    await save_user_event(
+        user_id=message.from_user.id,
+        event_type='calculation_started',
+        event_data={},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
+    )
+
+    await message.answer(
+        "📋 Выберите категорию услуги:",
+        reply_markup=get_main_menu_keyboard()
+    )
 
 
 @router.message(F.text == "📊 Сбор исходных данных")
@@ -223,13 +242,14 @@ async def service_program_development(message: Message, state: FSMContext):
     )
 
 
-
-
 @router.message(F.text == "💎 Геотехническое документирование керна")
 async def service_core_documentation(message: Message, state: FSMContext):
     """Геотехническое документирование керна"""
     await state.set_state(ServiceSelection.waiting_for_drilling_rigs)
-    await state.update_data(service_key="core_documentation")
+    await state.update_data(
+        service_key="core_documentation",
+        main_service="geodata_collection"
+    )
 
     question_text = """
 💎 Геотехническое документирование керна
@@ -260,7 +280,10 @@ async def service_stability_calculation(message: Message, state: FSMContext):
 
     service_key = service_map[message.text]
     await state.set_state(ServiceSelection.waiting_for_calculations_count)
-    await state.update_data(service_key=service_key)
+    await state.update_data(
+        service_key=service_key,
+        main_service="stability_calculation"
+    )
 
     descriptions = {
         "2d_ogr": "2D расчет устойчивости откосов и уступов (Slide, RS2)",
@@ -298,7 +321,10 @@ async def service_geomechanic_level(message: Message, state: FSMContext):
 
     service_key = service_map[message.text]
     await state.set_state(ServiceSelection.waiting_for_hours_count)
-    await state.update_data(service_key=service_key)
+    await state.update_data(
+        service_key=service_key,
+        main_service="geomechanic_hourly"
+    )
 
     prices = {
         "senior_geomechanic": "6 000 ₽/час (пакет от 24 000 ₽/мес)",
@@ -487,7 +513,6 @@ async def request_contacts(message: Message, state: FSMContext):
         last_name=message.from_user.last_name
     )
 
-    from app.bot.states import ContactCollection
     await state.set_state(ContactCollection.waiting_for_name)
 
     contacts_text = """
@@ -498,10 +523,10 @@ async def request_contacts(message: Message, state: FSMContext):
 Пожалуйста, введите ваше имя:
     """
 
-    from app.bot.keyboards.main_menu import get_skip_keyboard
+    from app.bot.keyboards.main_menu import get_back_keyboard
     await message.answer(
         contacts_text,
-        reply_markup=get_skip_keyboard()
+        reply_markup=get_back_keyboard()
     )
 
 
@@ -986,6 +1011,7 @@ async def back_from_questions(message: Message, state: FSMContext):
             "Выберите услугу:",
             reply_markup=get_main_menu_keyboard()
         )
+
 
 # Обработчики для кнопки Назад
 @router.message(ServiceSelection.waiting_for_subservice, F.text == "⬅️ Назад")
