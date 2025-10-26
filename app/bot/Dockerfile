@@ -10,16 +10,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Создание пользователя для безопасности
-RUN useradd -m -u 1000 botuser && mkdir -p /home/botuser/.cloud-certs && chown -R botuser:botuser /app /home/botuser
+RUN useradd -m -u 1000 botuser && \
+    mkdir -p /home/botuser/.cloud-certs && \
+    chown -R botuser:botuser /app /home/botuser
 
-# Копирование requirements и установка зависимостей
-COPY app/bot/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Копирование исходного кода бота
+# Копирование pyproject.toml и установка пакета в режиме разработки
+COPY app/bot/pyproject.toml .
 COPY app/bot/ .
+RUN pip install --no-cache-dir -e .
 
 USER botuser
 
-# Запуск бота
-CMD ["python", "-m", "app.bot.django_bot"]
+# Запуск бота через установленный пакет
+CMD ["python", "-c", "from app.bot.django_bot import main; main()"]

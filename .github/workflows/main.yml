@@ -10,13 +10,14 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     permissions:
       contents: read
       packages: write
 
     strategy:
       matrix:
-        component: [bot, admin]
+        component: [ bot, admin ]
 
     steps:
       - name: Checkout repository
