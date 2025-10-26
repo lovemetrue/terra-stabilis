@@ -9,10 +9,10 @@ services:
       - terrastabilis-network
     volumes:
       - bot_logs:/app/logs
-      - ~/.cloud-certs:/root/.cloud-certs:ro
+      - ~/.cloud-certs:/home/botuser/.cloud-certs:ro
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}&sslrootcert=${PGSSLROOTCERT}
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}&sslrootcert=/home/botuser/.cloud-certs/root.crt
       - BOT_TOKEN=${BOT_TOKEN}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DEBUG=${DEBUG}
@@ -33,10 +33,10 @@ services:
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
-      - ~/.cloud-certs:/root/.cloud-certs:ro
+      - ~/.cloud-certs:/etc/ssl/certs:ro
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}&sslrootcert=${PGSSLROOTCERT}
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}&sslrootcert=/etc/ssl/certs/root.crt
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DEBUG=${DEBUG}
       - SECRET_KEY=${SECRET_KEY}
