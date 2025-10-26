@@ -162,15 +162,14 @@ def get_back_keyboard() -> ReplyKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def get_phone_input_keyboard() -> ReplyKeyboardMarkup:
-    """Клавиатура для выбора способа ввода телефона"""
+
+def get_phone_input_keyboard():
+    """Клавиатура для ввода телефона - только для контактов"""
     builder = ReplyKeyboardBuilder()
-
-    builder.add(KeyboardButton(text="🚀 Рассчитать стоимость"))
-    builder.add(KeyboardButton(text="📞 Оставить контакты"))
-    builder.add(KeyboardButton(text="ℹ️ О компании"))
-
-    builder.adjust(2, 1)
+    builder.add(KeyboardButton(text="📞 Отправить контакт", request_contact=True))
+    builder.add(KeyboardButton(text="📝 Ввести номер вручную"))
+    builder.add(KeyboardButton(text="⬅️ Назад"))
+    builder.adjust(1, 1, 1)
     return builder.as_markup(resize_keyboard=True)
 
 
@@ -211,9 +210,8 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
 def get_confirmation_keyboard():
-    """Клавиатура для подтверждения данных"""
+    """Клавиатура для подтверждения данных - только для контактов"""
     builder = ReplyKeyboardBuilder()
-
     builder.add(KeyboardButton(text="✅ Всё верно"))
     builder.add(KeyboardButton(text="✏️ Исправить"))
     builder.adjust(2)

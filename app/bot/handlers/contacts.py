@@ -3,7 +3,7 @@ from aiogram.types import Message, Contact
 from aiogram.fsm.context import FSMContext
 import re
 
-from app.bot.states import ContactCollection, PhoneInput, EmailInput, OrganizationInput
+from app.bot.states import ContactCollection, PhoneInput
 from app.bot.keyboards.main_menu import *
 from apps.bot_data.bot_utils import save_user_event, save_contact, validate_email, format_user_data_for_confirmation
 
@@ -51,6 +51,15 @@ async def process_name(message: Message, state: FSMContext):
         await state.clear()
         await message.answer(
             "Возвращаемся в главное меню:",
+            reply_markup=get_main_menu_keyboard()
+        )
+        return
+
+    # Обработка кнопки "Рассчитать стоимость" в неправильном состоянии
+    if message.text == "🚀 Рассчитать стоимость":
+        await state.clear()
+        await message.answer(
+            "📋 Выберите категорию услуги:",
             reply_markup=get_main_menu_keyboard()
         )
         return
@@ -116,6 +125,17 @@ async def back_from_phone_selection(message: Message, state: FSMContext):
     )
 
 
+# Обработчик для кнопки "Рассчитать стоимость" в состоянии телефона
+@router.message(ContactCollection.waiting_for_phone, F.text == "🚀 Рассчитать стоимость")
+async def calculate_from_contacts(message: Message, state: FSMContext):
+    """Обработка кнопки расчета из состояния контактов"""
+    await state.clear()
+    await message.answer(
+        "📋 Выберите категорию услуги:",
+        reply_markup=get_main_menu_keyboard()
+    )
+
+
 @router.message(ContactCollection.waiting_for_phone, F.contact)
 async def process_contact(message: Message, state: FSMContext):
     """Обработка отправленного контакта"""
@@ -146,6 +166,15 @@ async def process_manual_phone(message: Message, state: FSMContext):
         await message.answer(
             "Выберите способ ввода телефона:",
             reply_markup=get_phone_input_keyboard()
+        )
+        return
+
+    # Обработка кнопки "Рассчитать стоимость" в неправильном состоянии
+    if message.text == "🚀 Рассчитать стоимость":
+        await state.clear()
+        await message.answer(
+            "📋 Выберите категорию услуги:",
+            reply_markup=get_main_menu_keyboard()
         )
         return
 
@@ -183,6 +212,15 @@ async def process_manual_phone(message: Message, state: FSMContext):
 @router.message(ContactCollection.waiting_for_email, F.text)
 async def process_email_choice(message: Message, state: FSMContext):
     """Обработка выбора относительно email"""
+    # Обработка кнопки "Рассчитать стоимость" в неправильном состоянии
+    if message.text == "🚀 Рассчитать стоимость":
+        await state.clear()
+        await message.answer(
+            "📋 Выберите категорию услуги:",
+            reply_markup=get_main_menu_keyboard()
+        )
+        return
+
     if message.text == "⏭️ Пропустить":
         # Пропускаем email, переходим к организации
         await state.set_state(ContactCollection.waiting_for_organization)
@@ -227,6 +265,15 @@ async def process_email_choice(message: Message, state: FSMContext):
 @router.message(ContactCollection.waiting_for_organization, F.text)
 async def process_organization_choice(message: Message, state: FSMContext):
     """Обработка выбора относительно организации"""
+    # Обработка кнопки "Рассчитать стоимость" в неправильном состоянии
+    if message.text == "🚀 Рассчитать стоимость":
+        await state.clear()
+        await message.answer(
+            "📋 Выберите категорию услуги:",
+            reply_markup=get_main_menu_keyboard()
+        )
+        return
+
     if message.text == "⏭️ Пропустить":
         # Пропускаем организацию, переходим к подтверждению
         await show_confirmation(message, state)
@@ -312,4 +359,15 @@ async def process_correction(message: Message, state: FSMContext):
     await message.answer(
         "Давайте исправим данные. Введите ваше имя:",
         reply_markup=get_back_keyboard()
+    )
+
+
+# Обработчик для кнопки "Рассчитать стоимость" в состоянии подтверждения
+@router.message(ContactCollection.confirmation, F.text == "🚀 Рассчитать стоимость")
+async def calculate_from_confirmation(message: Message, state: FSMContext):
+    """Обработка кнопки расчета из состояния подтверждения"""
+    await state.clear()
+    await message.answer(
+        "📋 Выберите категорию услуги:",
+        reply_markup=get_main_menu_keyboard()
     )

@@ -504,6 +504,9 @@ async def process_direct_service(message: Message, state: FSMContext, service_ke
 @router.message(F.text == "✅ Оставить контакты")
 async def request_contacts(message: Message, state: FSMContext):
     """Запрос контактов после расчета"""
+    # Очищаем предыдущее состояние квалификации
+    await state.clear()
+
     await save_user_event(
         user_id=message.from_user.id,
         event_type='contacts_request',
@@ -523,12 +526,10 @@ async def request_contacts(message: Message, state: FSMContext):
 Пожалуйста, введите ваше имя:
     """
 
-    from app.bot.keyboards.main_menu import get_back_keyboard
     await message.answer(
         contacts_text,
-        reply_markup=get_back_keyboard()
+        reply_markup=get_back_keyboard()  # Только кнопка "Назад"
     )
-
 
 # Хендлер для обработки ДА/НЕТ для геотехнических скважин
 @router.message(ServiceSelection.waiting_for_geotech_wells, F.text.in_(["✅ Да", "❌ Нет"]))
