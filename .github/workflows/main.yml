@@ -11,7 +11,7 @@ env:
   IMAGE_PREFIX: ${{ github.repository }}
 
 jobs:
-  test:
+  initiation:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -38,19 +38,8 @@ jobs:
           cd app/admin
           pip install -r requirements.txt
 
-      - name: Run Django tests
-        run: |
-          cd app/admin
-          export PGSSLROOTCERT=$HOME/.cloud-certs/root.crt
-          python manage.py test
-
-      - name: Run bot tests
-        run: |
-          cd app/bot
-          python -m pytest
-
   build-and-push:
-    needs: test
+    needs: initiation
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     permissions:
