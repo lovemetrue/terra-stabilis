@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   bot:
-    image: ghcr.io/lovemetrue/terra-stabilis:latest
+    image: ghcr.io/lovemetrue/terra-stabilis-bot:latest
     container_name: terrastabilis-bot
     restart: unless-stopped
     env_file:
@@ -11,6 +11,7 @@ services:
       - terrastabilis-network
     volumes:
       - bot_logs:/app/logs
+      - ~/.cloud-certs:/root/.cloud-certs:ro
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/root/.cloud-certs/root.crt
@@ -18,7 +19,7 @@ services:
       - redis
 
   admin:
-    image: ghcr.io/lovemetrue/terra-stabilis:latest
+    image: ghcr.io/lovemetrue/terra-stabilis-admin:latest
     container_name: terrastabilis-admin
     restart: unless-stopped
     env_file:
@@ -30,6 +31,7 @@ services:
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
+      - ~/.cloud-certs:/root/.cloud-certs:ro
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=verify-full&sslrootcert=/root/.cloud-certs/root.crt

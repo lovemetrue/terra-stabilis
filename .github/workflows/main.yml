@@ -38,6 +38,17 @@ jobs:
           cd app/admin
           pip install -r requirements.txt
 
+      - name: Run Django tests
+        run: |
+          cd app/admin
+          export PGSSLROOTCERT=$HOME/.cloud-certs/root.crt
+          python manage.py test
+
+      - name: Run bot tests
+        run: |
+          cd app/bot
+          python -m pytest
+
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
@@ -106,10 +117,28 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Show production files (debug)
+        run: |
+          echo "Listing production files in root:"
+          ls -la production/ || echo "production/ not found"
+          echo "Checking for required files:"
+          if [ -f production/docker-compose.yml ]; then
+            echo "✓ docker-compose.yml found"
+          else
+            echo "✗ docker-compose.yml missing"
+            exit 1
+          fi
+          if [ -f production/.env.example ]; then
+            echo "✓ .env.example found"
+          else
+            echo "✗ .env.example missing"
+            exit 1
+          fi
 
       - name: Copy production files to server
         uses: appleboy/scp-action@v0.1.4
@@ -147,10 +176,10 @@ jobs:
             chmod 0600 ~/.cloud-certs/root.crt
             
             # Логинимся в GitHub Container Registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             # Останавливаем и удаляем старые контейнеры
-            docker compose down
+            docker compose down || true
             
             # Pull последних образов
             docker compose pull
@@ -167,10 +196,10 @@ jobs:
             
             # Проверяем логи бота
             echo "🔍 Bot logs (last 10 lines):"
-            docker logs terrastabilis-bot --tail 10
+            docker logs terrastabilis-bot --tail 10 || echo "Bot container not running yet"
             
             # Проверяем логи админки
             echo "🔍 Admin logs (last 10 lines):"
-            docker logs terrastabilis-admin --tail 10
+            docker logs terrastabilis-admin --tail 10 || echo "Admin container not running yet"
             
             echo "🚀 Деплой успешно завершен!"
