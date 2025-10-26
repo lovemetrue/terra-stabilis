@@ -30,7 +30,7 @@ ENV PGSSLROOTCERT=/root/.cloud-certs/root.crt
 COPY app/admin/ .
 
 # Устанавливаем зависимости
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 # Node.js зависимости и сборка
 RUN npm ci
