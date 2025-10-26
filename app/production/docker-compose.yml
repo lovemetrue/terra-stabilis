@@ -6,7 +6,7 @@ services:
     container_name: terrastabilis-bot
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.example
     networks:
       - terrastabilis-network
     volumes:
@@ -23,7 +23,7 @@ services:
     container_name: terrastabilis-admin
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.example
     ports:
       - "8000:8000"
     networks:
