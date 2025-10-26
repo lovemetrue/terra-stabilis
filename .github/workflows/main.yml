@@ -113,16 +113,16 @@ jobs:
 
       - name: Show production files (debug)
         run: |
-          echo "Listing production files in root:"
-          ls -la production/ || echo "production/ not found"
+          echo "Listing production files in app/production:"
+          ls -la app/production/ || echo "app/production/ not found"
           echo "Checking for required files:"
-          if [ -f production/docker-compose.yml ]; then
+          if [ -f app/production/docker-compose.yml ]; then
             echo "✓ docker-compose.yml found"
           else
             echo "✗ docker-compose.yml missing"
             exit 1
           fi
-          if [ -f production/.env.example ]; then
+          if [ -f app/production/.env.example ]; then
             echo "✓ .env.example found"
           else
             echo "✗ .env.example missing"
@@ -135,7 +135,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "production/docker-compose.yml,production/.env.example"
+          source: "app/production/docker-compose.yml,app/production/.env.example"
           target: "/opt/terrastabilis/"
           overwrite: true
 
@@ -149,46 +149,46 @@ jobs:
             # Создаем директорию если не существует
             sudo mkdir -p /opt/terrastabilis
             sudo chown $USER:$USER /opt/terrastabilis
-            
+
             # Переходим в директорию проекта
             cd /opt/terrastabilis
-            
-            # Создаем .env файл если не существует
-            if [ ! -f .env ]; then
+
+            # Если пришёл .env.example — создаём .env из него (при первом деплое)
+            if [ -f .env.example ] && [ ! -f .env ]; then
               cp .env.example .env
-              echo "⚠️  Please update .env file with actual values!"
+              echo "⚠️  .env создан из .env.example — обновите значения в .env!"
             fi
-            
+
             # Создаем директорию для SSL сертификатов
             mkdir -p ~/.cloud-certs
             curl -o ~/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt"
             chmod 0600 ~/.cloud-certs/root.crt
-            
+
             # Логинимся в GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             # Останавливаем и удаляем старые контейнеры
             docker compose down || true
-            
+
             # Pull последних образов
             docker compose pull
-            
+
             # Запускаем контейнеры
             docker compose up -d
-            
+
             # Очищаем неиспользуемые образы
             docker image prune -f
-            
+
             # Проверяем статус контейнеров
             echo "📊 Status of running containers:"
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-            
+
             # Проверяем логи бота
             echo "🔍 Bot logs (last 10 lines):"
             docker logs terrastabilis-bot --tail 10 || echo "Bot container not running yet"
-            
+
             # Проверяем логи админки
             echo "🔍 Admin logs (last 10 lines):"
             docker logs terrastabilis-admin --tail 10 || echo "Admin container not running yet"
-            
+
             echo "🚀 Деплой успешно завершен!"
