@@ -28,4 +28,5 @@ ENV PYTHONPATH=/app
 USER botuser
 
 # Запуск бота
-CMD ["python", "-c", "from app.bot.django_bot import main; main()"]
+#CMD ["python", "-c", "from app.bot.django_bot import main; main()"]
+CMD ["python", "-c", "import asyncio; from app.bot.django_bot import main; asyncio.run(main())"]
