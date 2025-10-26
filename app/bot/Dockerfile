@@ -15,10 +15,11 @@ RUN apt-get update && apt-get install -y \
 # Создание пользователя для безопасности
 RUN useradd -m -u 1000 botuser
 
-# SSL сертификаты в единую директорию
+# SSL сертификаты в единую директорию с правильными правами
 RUN mkdir -p /app/.cloud-certs && \
     curl -o /app/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt" && \
-    chmod 0644 /app/.cloud-certs/root.crt
+    chmod 0644 /app/.cloud-certs/root.crt && \
+    chown -R botuser:botuser /app/.cloud-certs
 
 # Копируем всю структуру проекта
 COPY . .
@@ -30,9 +31,6 @@ RUN pip install --no-cache-dir -e .
 # Возвращаемся в корень и устанавливаем PYTHONPATH
 WORKDIR /app
 ENV PYTHONPATH=/app
-
-# Даем права botuser на доступ к сертификату
-RUN chown -R botuser:botuser /app/.cloud-certs
 
 USER botuser
 

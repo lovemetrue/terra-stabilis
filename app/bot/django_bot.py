@@ -5,19 +5,39 @@ import asyncio
 import logging
 from pathlib import Path
 
-# Проверка SSL сертификата перед настройкой Django
-SSL_CERT_PATH = os.getenv('PGSSLROOTCERT', '/app/.cloud-certs/root.crt')
+# Для бота используем путь доступный botuser, для админки - общий путь
+if os.getenv('SERVICE_TYPE') == 'bot':
+    SSL_CERT_PATH = '/app/.cloud-certs/root.crt'
+else:
+    SSL_CERT_PATH = '/app/.cloud-certs/root.crt'  # Единый путь для всех
+
 print(f"🔍 Checking SSL certificate at: {SSL_CERT_PATH}")
 
-if not Path(SSL_CERT_PATH).exists():
-    print(f"❌ SSL certificate not found at: {SSL_CERT_PATH}")
-    print("Available files in /app:")
-    for item in Path('/app').rglob('*'):
-        if item.is_file():
+try:
+    if not Path(SSL_CERT_PATH).exists():
+        print(f"❌ SSL certificate not found at: {SSL_CERT_PATH}")
+        print("Available files in /app:")
+        for item in Path('/app').rglob('*'):
+            if item.is_file():
+                print(f"  - {item}")
+        sys.exit(1)
+    else:
+        print(f"✅ SSL certificate found: {SSL_CERT_PATH}")
+        # Проверяем права доступа
+        stat_info = Path(SSL_CERT_PATH).stat()
+        print(f"✅ Certificate permissions: {oct(stat_info.st_mode)}")
+        print(f"✅ Certificate owner: {stat_info.st_uid}")
+
+except PermissionError as e:
+    print(f"❌ Permission denied for SSL certificate: {e}")
+    print(f"Current user: {os.getuid()}")
+    print("Trying to list /app/.cloud-certs/ directory:")
+    try:
+        for item in Path('/app/.cloud-certs').iterdir():
             print(f"  - {item}")
+    except Exception as list_error:
+        print(f"  Cannot list directory: {list_error}")
     sys.exit(1)
-else:
-    print(f"✅ SSL certificate found: {SSL_CERT_PATH}")
 
 # Добавляем корневую директорию проекта в Python path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

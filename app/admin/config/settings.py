@@ -110,7 +110,23 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 # Database configuration - используем ваши данные напрямую
 # Универсальный путь к SSL сертификату
+
+
+# Определяем путь к SSL сертификату в зависимости от сервиса
+SERVICE_TYPE = os.getenv('SERVICE_TYPE', 'admin')
 SSL_CERT_PATH = os.getenv('PGSSLROOTCERT', '/app/.cloud-certs/root.crt')
+
+if SERVICE_TYPE == 'bot':
+    # Для бота используем путь доступный botuser
+    SSL_CERT_PATH = '/app/.cloud-certs/root.crt'
+else:
+    # Для админки тоже используем тот же путь для единообразия
+    SSL_CERT_PATH = '/app/.cloud-certs/root.crt'
+
+# Проверяем доступность сертификата
+if not Path(SSL_CERT_PATH).exists():
+    raise Exception(f"SSL certificate not found at: {SSL_CERT_PATH}")
+
 
 DATABASES = {
     'default': {
