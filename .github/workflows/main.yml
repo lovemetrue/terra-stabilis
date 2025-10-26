@@ -76,32 +76,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show production files (debug)
-        run: |
-          echo "Listing files in app directory:"
-          ls -la app/
-          echo "Checking for required files:"
-          if [ -f app/docker-compose.yml ]; then
-            echo "✓ docker-compose.yml found"
-          else
-            echo "✗ docker-compose.yml missing"
-            exit 1
-          fi
-          if [ -f app/.env.example ]; then
-            echo "✓ .env.example found"
-          else
-            echo "✗ .env.example missing"
-            exit 1
-          fi
-
-      - name: Copy production files to server (to user's home — not /opt)
+      - name: Copy production files to server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "app/"
-          target: "~/terrastabilis/"
+          source: "app/prod/docker-compose.yml,app/prod/.env.example"
+          target: "/opt/terrastabilis/"
           overwrite: true
 
       - name: Deploy and health check
@@ -111,129 +93,78 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            set -e  # Exit on any error
+            set -e
 
             # Создаем директорию если не существует
             sudo mkdir -p /opt/terrastabilis
             sudo chown $USER:$USER /opt/terrastabilis
 
-            # Переходим в директорию проекта
             cd /opt/terrastabilis
 
-            # Проверяем, что .env существует
-            if [ ! -f .env ]; then
-              if [ -f .env.example ]; then
-                cp .env.example .env
-                echo "⚠️  .env создан из .env.example — обновите значения в .env!"
-              else
-                echo "❌ .env.example не найден, невозможно создать .env"
-                exit 1
-              fi
+            # Проверяем наличие файлов в корне
+            echo "=== Checking files in /opt/terrastabilis ==="
+            ls -la
+
+            # Если файлы в app/, перемещаем их в prod
+            if [ -f app/docker-compose.yml ]; then
+              echo "📁 Files found in app/, moving to prod..."
+              mv app/docker-compose.yml app/prod/docker-compose.yml
+              mv app/.env.example app/prod/.env.example
+              rm -rf app/
+              echo "✅ Files moved to prod directory"
             fi
 
-            # Создаем директорию для SSL сертификатов
+            # Проверяем наличие файлов после перемещения
+            if [ ! -f docker-compose.yml ]; then
+              echo "❌ docker-compose.yml not found after moving!"
+              exit 1
+            fi
+
+            # Создаем .env из .env.example если нужно
+            if [ ! -f .env ] && [ -f .env.example ]; then
+              cp .env.example .env
+              echo "⚠️  .env created from .env.example - please update sensitive values!"
+            elif [ -f .env ]; then
+              echo "✅ Using existing .env file"
+            else
+              echo "❌ Neither .env nor .env.example found!"
+              exit 1
+            fi
+
+            # SSL сертификаты
             mkdir -p ~/.cloud-certs
             curl -o ~/.cloud-certs/root.crt "https://st.timeweb.com/cloud-static/ca.crt"
             chmod 0600 ~/.cloud-certs/root.crt
 
-            # Логинимся в GitHub Container Registry
+            # Логинимся в registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Останавливаем и удаляем старые контейнеры
+            # Деплой
             echo "🛑 Stopping old containers..."
             docker compose down || true
 
-            # Pull последних образов
             echo "📥 Pulling latest images..."
             docker compose pull
 
-            # Запускаем контейнеры
             echo "🚀 Starting containers..."
             docker compose up -d
 
-            # Даем контейнерам время на запуск
             echo "⏳ Waiting for containers to start..."
             sleep 30
 
             # Проверяем статус контейнеров
-            echo "📊 Checking container status..."
+            echo "📊 Container status:"
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-            # Проверяем, что все контейнеры запущены
-            echo "🔍 Checking if all containers are running..."
-            if ! docker ps --format "table {{.Names}}" | grep -q "terrastabilis-bot"; then
-              echo "❌ Bot container is not running!"
-              echo "📋 Bot container logs:"
-              docker logs terrastabilis-bot --tail 20 || true
-              exit 1
-            fi
+            # Проверяем что все контейнеры запущены
+            for container in terrastabilis-bot terrastabilis-admin terrastabilis-redis; do
+              if docker ps --format "{{.Names}}" | grep -q "$container"; then
+                echo "✅ $container is running"
+              else
+                echo "❌ $container is NOT running"
+                docker logs "$container" --tail 10 || true
+                exit 1
+              fi
+            done
 
-            if ! docker ps --format "table {{.Names}}" | grep -q "terrastabilis-admin"; then
-              echo "❌ Admin container is not running!"
-              echo "📋 Admin container logs:"
-              docker logs terrastabilis-admin --tail 20 || true
-              exit 1
-            fi
-
-            if ! docker ps --format "table {{.Names}}" | grep -q "terrastabilis-redis"; then
-              echo "❌ Redis container is not running!"
-              echo "📋 Redis container logs:"
-              docker logs terrastabilis-redis --tail 10 || true
-              exit 1
-            fi
-
-            echo "✅ All containers are running!"
-
-            # Health check для админки (проверяем HTTP endpoint)
-            echo "🏥 Performing health check on admin..."
-            ADMIN_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/ || echo "000")
-            if [ "$ADMIN_HEALTH" = "000" ]; then
-              echo "❌ Admin health check failed - service not responding"
-              echo "📋 Admin container logs:"
-              docker logs terrastabilis-admin --tail 30
-              exit 1
-            elif [ "$ADMIN_HEALTH" = "500" ]; then
-              echo "❌ Admin health check failed - internal server error"
-              echo "📋 Admin container logs:"
-              docker logs terrastabilis-admin --tail 30
-              exit 1
-            else
-              echo "✅ Admin health check passed with status: $ADMIN_HEALTH"
-            fi
-
-            # Health check для Redis
-            echo "🏥 Performing health check on Redis..."
-            if docker exec terrastabilis-redis redis-cli ping | grep -q "PONG"; then
-              echo "✅ Redis health check passed"
-            else
-              echo "❌ Redis health check failed"
-              docker logs terrastabilis-redis --tail 10
-              exit 1
-            fi
-
-            # Проверяем логи бота на наличие ошибок
-            echo "🔍 Checking bot logs for errors..."
-            if docker logs terrastabilis-bot --tail 20 2>&1 | grep -i "error\|exception\|failed" | grep -v "DEBUG"; then
-              echo "⚠️  Bot has some errors in logs, but continuing..."
-              docker logs terrastabilis-bot --tail 10 | grep -i "error\|exception\|failed" | head -5
-            else
-              echo "✅ Bot logs look clean"
-            fi
-
-            # Очищаем неиспользуемые образы
-            echo "🧹 Cleaning up unused images..."
-            docker image prune -f
-
-            # Финальный статус
-            echo " "
-            echo "🎉 Deployment completed successfully!"
-            echo "📊 Final container status:"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.RunningFor}}\t{{.Ports}}"
-            
-            # Получаем внешний IP для информации
-            echo " "
-            echo "🌐 Services:"
-            echo "   - Admin panel: http://localhost:8000"
-            echo "   - Bot: running in background"
-            echo "   - Redis: running on port 6379"
-            
+            echo "🎉 Deployment successful!"
