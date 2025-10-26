@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.core.validators import EmailValidator
 
 
 class BotUser(models.Model):
@@ -28,6 +29,20 @@ class BotUser(models.Model):
         null=True,
         help_text="Фамилия"
     )
+    email = models.EmailField(
+        max_length=255,
+        blank=True,
+        null=True,
+        db_index=True,
+        validators=[EmailValidator()],
+        help_text="Email адрес"
+    )
+    organization = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Организация/компания"
+    )
     phone = models.CharField(
         max_length=50,
         blank=True,
@@ -38,6 +53,14 @@ class BotUser(models.Model):
     has_shared_contact = models.BooleanField(
         default=False,
         help_text="Поделился контактом"
+    )
+    has_provided_email = models.BooleanField(
+        default=False,
+        help_text="Предоставил email"
+    )
+    has_provided_organization = models.BooleanField(
+        default=False,
+        help_text="Предоставил информацию об организации"
     )
     created_at = models.DateTimeField(
         default=timezone.now,
@@ -70,7 +93,25 @@ class BotUser(models.Model):
         """Переопределяем save для логики обновления контакта"""
         if self.phone and not self.has_shared_contact:
             self.has_shared_contact = True
+        if self.email and not self.has_provided_email:
+            self.has_provided_email = True
+        if self.organization and not self.has_provided_organization:
+            self.has_provided_organization = True
         super().save(*args, **kwargs)
+
+    def get_completion_status(self):
+        """Получить статус заполнения профиля"""
+        completed = 0
+        total = 3  # телефон, email, организация
+
+        if self.phone:
+            completed += 1
+        if self.email:
+            completed += 1
+        if self.organization:
+            completed += 1
+
+        return f"{completed}/{total}"
 
 
 class BotUserEvent(models.Model):
