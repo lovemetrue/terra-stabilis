@@ -42,6 +42,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev-latest,enable={{branch == 'dev'}}
 
       - name: Build and push Bot image
         if: matrix.component == 'bot'
