@@ -1,6 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import Message
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 
 from app.bot.keyboards.main_menu import get_main_menu_keyboard
@@ -11,29 +11,50 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
-    """Обработчик команды /start"""
+    """Обработка команды /start"""
+    await state.clear()
+
+    welcome_text = """
+🤝 <b>Нужно снизить коэффициент вскрыши?</b>
+📊 <b>Сделать расчёты по устойчивости?</b>
+📋 <b>Подготовить геомеханику и гидрогеологию для ТЭО или проекта?</b>
+
+Добро пожаловать в <b>Terra Stabilis</b> — центр компетенций в области геомеханики и гидрогеологии. Мы помогаем горнодобывающим компаниям повышать устойчивость откосов и безопасность работ.
+
+<b>Выберите интересующий раздел:</b>
+    """
+
     await save_user_event(
         user_id=message.from_user.id,
-        event_type='start',
-        event_data={'source': 'telegram', 'command': 'start'},
+        event_type='bot_start',
+        event_data={},
         username=message.from_user.username,
         first_name=message.from_user.first_name,
         last_name=message.from_user.last_name
     )
 
-    await state.clear()
-
-    welcome_text = """
-Добро пожаловать в Terra Stabilis — центр компетенций в области геомеханики и гидрогеологии. 
-
-Мы помогаем горнодобывающим компаниям повышать устойчивость откосов и безопасность работ.
-
-Выберите интересующий раздел:
-        """
-
     await message.answer(
         welcome_text,
-        reply_markup=get_main_menu_keyboard()
+        reply_markup=get_main_menu_keyboard(),
+        parse_mode='HTML'
+    )
+
+
+@router.message(F.text == "⬅️ Главное меню")
+async def main_menu(message: Message, state: FSMContext):
+    """Возврат в главное меню"""
+    await state.clear()
+
+    menu_text = """
+📋 <b>Главное меню</b>
+
+Выберите интересующий раздел:
+    """
+
+    await message.answer(
+        menu_text,
+        reply_markup=get_main_menu_keyboard(),
+        parse_mode='HTML'
     )
 
 @router.message(F.text == "🏢 О компании")
