@@ -41,8 +41,8 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{ or (eq .Branch "dev") .IsDefaultBranch }}
-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable={{branch == 'dev'}}
 
       - name: Build and push Bot image
         if: matrix.component == 'bot'
