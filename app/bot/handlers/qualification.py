@@ -214,6 +214,15 @@ async def service_program_development(message: Message, state: FSMContext):
         main_service="geodata_collection"
     )
 
+    await save_user_event(
+        user_id=message.from_user.id,
+        event_type='service_select',
+        event_data={'service': 'program_development'},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
+    )
+
     question_text = """
 📝 Разработка программы геотехнических исследований
 
@@ -245,6 +254,15 @@ async def service_core_documentation(message: Message, state: FSMContext):
         main_service="geodata_collection"
     )
 
+    await save_user_event(
+        user_id=message.from_user.id,
+        event_type='service_select',
+        event_data={'service': 'core_documentation'},
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name
+    )
+
     question_text = """
 💎 Геотехническое документирование керна
 
@@ -256,6 +274,283 @@ async def service_core_documentation(message: Message, state: FSMContext):
     await message.answer(
         question_text,
         reply_markup=get_back_keyboard()
+    )
+
+
+# Хендлер для обработки ДА/НЕТ для геотехнических скважин
+@router.message(ServiceSelection.waiting_for_geotech_wells, F.text.in_(["✅ Да", "❌ Нет"]))
+async def process_geotech_wells_answer(message: Message, state: FSMContext):
+    """Обработка ответа о наличии базы геотехнических скважин"""
+    answer = message.text == "✅ Да"
+
+    await state.update_data(geotech_wells=answer)
+    await state.set_state(ServiceSelection.waiting_for_geo_wells)
+
+    next_question = """
+Отлично! Следующий вопрос:
+
+Есть ли база данных по геологическим скважинам?
+    """
+
+    await message.answer(
+        next_question,
+        reply_markup=get_yes_no_keyboard()
+    )
+
+
+# Хендлер для обработки ДА/НЕТ для геологических скважин
+@router.message(ServiceSelection.waiting_for_geo_wells, F.text.in_(["✅ Да", "❌ Нет"]))
+async def process_geo_wells_answer(message: Message, state: FSMContext):
+    """Обработка ответа о наличии базы геологических скважин"""
+    answer = message.text == "✅ Да"
+
+    await state.update_data(geo_wells=answer)
+    await state.set_state(ServiceSelection.waiting_for_fms_data)
+
+    next_question = """
+Отлично! Последний вопрос:
+
+Есть ли база данных по ФМС?
+    """
+
+    await message.answer(
+        next_question,
+        reply_markup=get_yes_no_keyboard()
+    )
+
+
+# Хендлер для обработки ДА/НЕТ для ФМС и финального расчета
+@router.message(ServiceSelection.waiting_for_fms_data, F.text.in_(["✅ Да", "❌ Нет"]))
+async def process_fms_answer_and_calculate(message: Message, state: FSMContext):
+    """Обработка ответа о наличии ФМС и расчет стоимости"""
+    answer = message.text == "✅ Да"
+
+    user_data = await state.get_data()
+    service_key = user_data.get('service_key', 'program_development')
+
+    # Базовая цена
+    base_price = SERVICE_BASE_PRICES.get(service_key, 300000)
+
+    # Логика расчета на основе ответов
+    final_price = base_price
+
+    # Если есть все данные - скидка
+    if (user_data.get('geotech_wells') and
+        user_data.get('geo_wells') and
+        answer):
+        final_price = int(base_price * 0.9)  # 10% скидка за полный комплект данных
+    # Если есть 2 из 3 данных - небольшая скидка
+    elif ((user_data.get('geotech_wells') and user_data.get('geo_wells')) or
+          (user_data.get('geotech_wells') and answer) or
+          (user_data.get('geo_wells') and answer)):
+        final_price = int(base_price * 0.95)  # 5% скидка
+
+    user_info = {
+        'username': message.from_user.username,
+        'first_name': message.from_user.first_name,
+        'last_name': message.from_user.last_name
+    }
+
+    # Сохраняем расчет
+    await save_calculation(
+        user_id=message.from_user.id,
+        service_type=service_key,
+        parameters={
+            'geotech_wells': user_data.get('geotech_wells'),
+            'geo_wells': user_data.get('geo_wells'),
+            'fms_data': answer
+        },
+        result=f"Рассчитана стоимость услуги: {final_price:,} ₽",
+        price=final_price,
+        **user_info
+    )
+
+    # Сохраняем лид
+    await save_lead(
+        user_id=message.from_user.id,
+        service_type=service_key,
+        calculated_price=final_price,
+        **user_info
+    )
+
+    await save_user_event(
+        user_id=message.from_user.id,
+        event_type='final_service_select',
+        event_data={
+            'main_service': user_data.get('main_service'),
+            'final_service': service_key,
+            'calculated_price': final_price,
+            'answers': {
+                'geotech_wells': user_data.get('geotech_wells'),
+                'geo_wells': user_data.get('geo_wells'),
+                'fms_data': answer
+            }
+        },
+        **user_info
+    )
+
+    # Формируем текст с ответами
+    answers_text = "Ваши ответы:\n"
+    answers_text += f"• Геотехнические скважины: {'✅ Да' if user_data.get('geotech_wells') else '❌ Нет'}\n"
+    answers_text += f"• Геологические скважины: {'✅ Да' if user_data.get('geo_wells') else '❌ Нет'}\n"
+    answers_text += f"• Данные ФМС: {'✅ Да' if answer else '❌ Нет'}"
+
+    service_text = f"""
+📝 Разработка программы геотехнических исследований
+
+{answers_text}
+
+Итоговая стоимость: {final_price:,} ₽
+
+Хотите оставить контакты для подробной консультации?
+    """
+
+    await state.set_state(Calculation.showing_price)
+    await state.update_data(
+        final_service=service_key,
+        calculated_price=final_price
+    )
+
+    await message.answer(
+        service_text,
+        reply_markup=get_contact_keyboard()
+    )
+
+
+# Хендлер для обработки количества буровых станков
+@router.message(ServiceSelection.waiting_for_drilling_rigs, F.text)
+async def process_drilling_rigs_count(message: Message, state: FSMContext):
+    """Обработка ввода количества буровых станков"""
+    if message.text == "⬅️ Назад":
+        await state.set_state(ServiceSelection.waiting_for_subservice)
+        await message.answer(
+            "Выберите услугу:",
+            reply_markup=get_geodata_keyboard()
+        )
+        return
+
+    # Проверяем, что введено число
+    if not message.text.isdigit():
+        await message.answer(
+            "❌ Пожалуйста, введите число буровых станков:",
+            reply_markup=get_back_keyboard()
+        )
+        return
+
+    rigs_count = int(message.text)
+
+    if rigs_count <= 0:
+        await message.answer(
+            "❌ Количество станков должно быть больше 0:",
+            reply_markup=get_back_keyboard()
+        )
+        return
+
+    user_data = await state.get_data()
+    service_key = user_data.get('service_key', 'core_documentation')
+
+    # Расчет стоимости: 3 документатора на станок, каждый по 300,000 руб/мес
+    documentators_per_rig = 3
+    cost_per_documentator = 300000
+    total_documentators = rigs_count * documentators_per_rig
+    final_price = total_documentators * cost_per_documentator
+
+    user_info = {
+        'username': message.from_user.username,
+        'first_name': message.from_user.first_name,
+        'last_name': message.from_user.last_name
+    }
+
+    # Сохраняем расчет
+    await save_calculation(
+        user_id=message.from_user.id,
+        service_type=service_key,
+        parameters={'rigs_count': rigs_count},
+        result=f"Рассчитана стоимость: {final_price:,} ₽/мес ({rigs_count} станков × {documentators_per_rig} документаторов)",
+        price=final_price,
+        **user_info
+    )
+
+    # Сохраняем лид
+    await save_lead(
+        user_id=message.from_user.id,
+        service_type=service_key,
+        calculated_price=final_price,
+        **user_info
+    )
+
+    await save_user_event(
+        user_id=message.from_user.id,
+        event_type='final_service_select',
+        event_data={
+            'main_service': user_data.get('main_service'),
+            'final_service': service_key,
+            'rigs_count': rigs_count,
+            'calculated_price': final_price
+        },
+        **user_info
+    )
+
+    service_text = f"""
+💎 Геотехническое документирование керна
+
+Количество станков: {rigs_count}
+Необходимо документаторов: {total_documentators}
+
+Итоговая стоимость: {final_price:,} ₽ в месяц
+
+Хотите оставить контакты для подробной консультации?
+    """
+
+    await state.set_state(Calculation.showing_price)
+    await state.update_data(
+        final_service=service_key,
+        calculated_price=final_price
+    )
+
+    await message.answer(
+        service_text,
+        reply_markup=get_contact_keyboard()
+    )
+
+
+# Хендлер для кнопки Назад в различных состояниях ввода
+@router.message(
+    ServiceSelection.waiting_for_geotech_wells,
+    ServiceSelection.waiting_for_geo_wells,
+    ServiceSelection.waiting_for_fms_data,
+    F.text == "⬅️ Назад"
+)
+async def back_from_questions(message: Message, state: FSMContext):
+    """Возврат из вопросов к выбору услуги"""
+    await state.set_state(ServiceSelection.waiting_for_subservice)
+
+    user_data = await state.get_data()
+    main_service = user_data.get('main_service', 'geodata_collection')
+
+    if main_service == 'geodata_collection':
+        await message.answer(
+            "Выберите услугу:",
+            reply_markup=get_geodata_keyboard()
+        )
+    else:
+        await message.answer(
+            "Выберите услугу:",
+            reply_markup=get_main_menu_keyboard()
+        )
+
+
+# Обработчики некорректных ответов для вопросов ДА/НЕТ
+@router.message(
+    ServiceSelection.waiting_for_geotech_wells,
+    ServiceSelection.waiting_for_geo_wells,
+    ServiceSelection.waiting_for_fms_data
+)
+async def handle_invalid_yes_no_answer(message: Message):
+    """Обработка некорректных ответов на вопросы ДА/НЕТ"""
+    await message.answer(
+        "❌ Пожалуйста, используйте кнопки для ответа:",
+        reply_markup=get_yes_no_keyboard()
     )
 
 
