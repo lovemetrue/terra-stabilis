@@ -41,7 +41,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{or (eq .Branch "dev") .IsDefaultBranch}}
+            type=raw,value=latest,enable={{ or (eq .Branch "dev") .IsDefaultBranch }}
 
 
       - name: Build and push Bot image
