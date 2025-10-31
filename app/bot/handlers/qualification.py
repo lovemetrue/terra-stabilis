@@ -729,7 +729,7 @@ async def process_direct_service(message: Message, state: FSMContext, service_ke
         user_id=message.from_user.id,
         service_type=service_key,
         parameters={'description': description},
-        result=f"Стоимость от: {price:,} ₽",
+        result=f"Предварительная стоимость от: {price:,} ₽",
         price=price,
         **user_info
     )
@@ -766,13 +766,13 @@ async def process_direct_service(message: Message, state: FSMContext, service_ke
         "water_impact_assessment": "⚖️ Оценка влияния подземных вод на устойчивость"
     }
 
-    # Для услуг гидрогеологии и TARP используем "Стоимость от"
+    # Для услуг гидрогеологии и TARP используем "Предварительная стоимость: от"
     service_text = f"""
 {service_names.get(service_key, "Услуга")}
 
 {description}
 
-Стоимость от {price:,} ₽
+Предварительная стоимость: от {price:,} ₽
 
 Хотите оставить контакты для подробной консультации и точного расчета?
     """
