@@ -222,7 +222,7 @@ async def cmd_help(message: Message):
 /start - Главное меню
 
 Если у вас возникли проблемы, просто начните с /start\n
-Контакт: @terrastabilis
+Наш контакт в Telegram: @terrastabilis
     """
 
     await message.answer(help_text)
